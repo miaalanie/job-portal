@@ -158,7 +158,7 @@ function buildCard(job) {
                 + '<h6 class="fw-bold text-dark fs-7 mb-1 text-truncate" style="max-width:180px;">' + esc(job.namalowongan) + '</h6>'
                 + '<span class="score-badge ' + scoreClass + ' flex-shrink-0">' + job.match_percentage + '%</span>'
             + '</div>'
-            + '<div class="text-muted fs-8 text-truncate">' + esc(job.perusahaan_nama ?? '-') + '</div>'
+            + '<div class="text-muted fs-8 text-truncate">' + esc(job.kategorilokasi ?? '-') + '</div>'
             + '<div class="text-muted fs-9">' + esc(job.kategori) + '</div>'
             + gajiHtml
             + (tagsHtml ? '<div class="d-flex flex-wrap gap-1 mt-2">' + tagsHtml + '</div>' : '')

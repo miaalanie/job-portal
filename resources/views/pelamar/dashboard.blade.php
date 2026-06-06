@@ -348,13 +348,7 @@
 
             <!-- Right Sidebar -->
             <div class="col-xl-4 col-lg-5">
-                
-x   
-
-                
-
-
-
+                @include('pelamar.rekomendasi-section')
                 <!-- Event Invitation Card -->
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden position-relative">
                     <div class="bg-primary-theme p-4 text-white text-center">

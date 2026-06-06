@@ -15,19 +15,6 @@ class RekomendasiController extends Controller
         private MLMatchingService $mlService
     ) {}
 
-    /**
-     * Endpoint AJAX untuk rekomendasi lowongan.
-     *
-     * Dipanggil dari frontend via fetch() setelah dashboard selesai load.
-     * Bukan dipanggil langsung dari server-side render — supaya dashboard
-     * tetap responsif meski ML service butuh 5-10 detik.
-     *
-     * Flow:
-     *   1. Ambil data pelamar lengkap (skills, edu, exp)
-     *   2. Ambil loker aktif dari event yang sedang berjalan
-     *   3. Kirim ke ML service → dapat ranking + score
-     *   4. Return JSON ke frontend
-     */
     public function getRekomendasi(): JsonResponse
     {
         $user = Auth::user();
@@ -46,19 +33,6 @@ class RekomendasiController extends Controller
             'pengalamans',
         ]);
 
-        // ============================================================
-        // AMBIL LOKER AKTIF DARI EVENT YANG SEDANG BERJALAN
-        //
-        // Filter:
-        //   - register.aktivasi = 1 (perusahaan sudah aktif di event)
-        //   - register.even.statusaktif = 1 (event sedang aktif)
-        //
-        // Tidak filter berdasarkan tanggal karena career day bisa
-        // berlangsung 1 hari saja, statusaktif yang jadi penentu.
-        //
-        // Limit 100: sweet spot antara coverage dan performa ML service.
-        // Dengan 58 loker di data real, limit ini tidak akan tercapai.
-        // ============================================================
         $lowongans = Lowongan::with([
             'register.perusahaan',
             'register.even',
