@@ -12,24 +12,17 @@ class  MLMatchingService
 
     public function __construct()
     {
-        // URL ML service dari .env
-        // ML_SERVICE_URL=http://localhost:8001
         $this->baseUrl = config('services.ml.url', 'http://localhost:8001');
         $this->timeout = config('services.ml.timeout', 60);
     }
 
-    /**
-     * Kirim data pelamar + loker ke ML service dan return hasil ranking.
-     *
-     * @param  \App\Models\Pelamar  $pelamar  (sudah di-load dengan relasi)
-     * @param  \Illuminate\Support\Collection  $lowongans
-     * @return array
-     */
     public function match($pelamar, $lowongans): array
     {
         try {
-            $payload = $this->buildPayload($pelamar, $lowongans);
-
+            $payload = [
+                'pelamar'   => $this->buildPelamarPayload($pelamar),
+                'lowongans' => $this->buildLowongansPayload($lowongans),
+            ];
             $response = Http::timeout($this->timeout)
                 ->post("{$this->baseUrl}/match", $payload);
 
@@ -76,42 +69,6 @@ class  MLMatchingService
         }
     }
 
-    /**
-     * Bangun payload JSON yang sesuai dengan schema ML service.
-     *
-     * Struktur payload:
-     * {
-     *   "pelamar": {
-     *     "id": 1,
-     *     "namalengkap": "...",
-     *     "deskripsidiri": "...",
-     *     "skills": [{"namaskill": "Python", "keterangan": "Baik"}],
-     *     "pendidikans": [{"kategori": "S1", "jurusan": "Informatika", ...}],
-     *     "pengalamans": [{"posisi": "Backend Dev", "tahunawal": 2020, ...}]
-     *   },
-     *   "lowongans": [
-     *     {
-     *       "id": 1,
-     *       "namalowongan": "...",
-     *       "deskripsi": "<p>HTML...</p>",
-     *       "kategori": {"id": 1, "nama": "IT & Software"},
-     *       "kategorilokasi": "Dalam Negeri",
-     *       "gaji_awal": 5000000,
-     *       "gaji_akhir": 8000000,
-     *       "perusahaan_nama": "PT ABC",
-     *       "perusahaan_logo": "logos/abc.png"
-     *     }
-     *   ]
-     * }
-     */
-    private function buildPayload($pelamar, $lowongans): array
-    {
-        return [
-            'pelamar'   => $this->buildPelamarPayload($pelamar),
-            'lowongans' => $this->buildLowongansPayload($lowongans),
-        ];
-    }
-
     private function buildPelamarPayload($pelamar): array
     {
         return [
@@ -144,27 +101,40 @@ class  MLMatchingService
         ];
     }
 
-    private function buildLowongansPayload($lowongans): array
+    private function buildLowonganPayload($lowongan): array
     {
-        return $lowongans->map(fn($lo) => [
-            'id'             => $lo->id,
-            'namalowongan'   => $lo->namalowongan,
-            'deskripsi'      => $lo->deskripsi,  // HTML — di-strip di Python
-            'kategorilokasi' => $lo->kategorilokasi,
-            'gaji_awal'      => $lo->gaji_awal ? (float) $lo->gaji_awal : null,
-            'gaji_akhir'     => $lo->gaji_akhir ? (float) $lo->gaji_akhir : null,
+        return [
+            'id'             => $lowongan->id,
+            'namalowongan'   => $lowongan->namalowongan,
+            'deskripsi'      => $lowongan->deskripsi,
+            'kategorilokasi' => $lowongan->kategorilokasi,
 
-            // Kategori sebagai object sesuai KategoriSchema di Python
+            'gaji_awal' => $lowongan->gaji_awal
+                ? (float) $lowongan->gaji_awal
+                : null,
+
+            'gaji_akhir' => $lowongan->gaji_akhir
+                ? (float) $lowongan->gaji_akhir
+                : null,
+
             'kategori' => [
-                'id'   => $lo->kategori->id,
-                'nama' => $lo->kategori->nama,
+                'id'   => $lowongan->kategori->id,
+                'nama' => $lowongan->kategori->nama,
             ],
 
-            // Info perusahaan untuk ditampilkan di UI
-            // Diambil dari relasi register.perusahaan
-            'perusahaan_nama' => $lo->register->perusahaan->nama ?? null,
-            'perusahaan_logo' => $lo->register->perusahaan->logo ?? null,
-        ])->toArray();
+            'perusahaan_nama' =>
+            $lowongan->register->perusahaan->nama ?? null,
+
+            'perusahaan_logo' =>
+            $lowongan->register->perusahaan->logo ?? null,
+        ];
+    }
+
+    private function buildLowongansPayload($lowongans): array
+    {
+        return $lowongans
+            ->map(fn($lo) => $this->buildLowonganPayload($lo))
+            ->toArray();
     }
 
     public function rankApplicants($loker): array
@@ -199,18 +169,8 @@ class  MLMatchingService
     private function buildRankPayload($loker): array
     {
         return [
-            'lowongan' => [
-                'id'             => $loker->id,
-                'namalowongan'   => $loker->namalowongan,
-                'deskripsi'      => $loker->deskripsi,
-                'kategorilokasi' => $loker->kategorilokasi,
-                'gaji_awal'      => $loker->gaji_awal  ? (float) $loker->gaji_awal  : null,
-                'gaji_akhir'     => $loker->gaji_akhir ? (float) $loker->gaji_akhir : null,
-                'kategori' => [
-                    'id'   => $loker->kategori->id,
-                    'nama' => $loker->kategori->nama,
-                ],
-            ],
+            'lowongan' => $this->buildLowonganPayload($loker),
+
             'pelamars' => $loker->lamarans
                 ->filter(fn($l) => $l->pelamar !== null)
                 ->map(fn($l) => $this->buildPelamarPayload($l->pelamar))

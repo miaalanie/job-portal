@@ -145,9 +145,12 @@
 
                 {{-- Aksi --}}
                 <td class="text-end pe-4">
-                    <a href="#" class="btn btn-sm btn-light-primary fw-bold" title="Lihat Profil">
-                        <i class="material-icons fs-5">person_search</i> CV
+                    @if($lamaran->pelamar)
+                    <a href="{{ route('admin.perusahaan.pelamar.download-cv', encrypt($lamaran->pelamar->id)) }}"
+                        class="btn btn-sm btn-light-primary fw-bold">
+                        <i class="material-icons fs-5">description</i> CV
                     </a>
+                    @endif
                 </td>
             </tr>
             @empty
