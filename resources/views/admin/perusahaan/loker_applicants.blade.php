@@ -64,28 +64,7 @@
 
     <!-- Applicants List -->
     <div class="col-lg-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header border-0 pt-7">
-                <h3 class="card-title align-items-start flex-column">
-                    <span class="card-label fw-bold text-gray-800 fs-3">Daftar Kandidat Pelamar</span>
-                    <span class="text-gray-400 mt-1 fw-semibold fs-7">Rincian pencari kerja yang tertarik pada posisi ini</span>
-                </h3>
-            </div>
-            <div class="card-body pt-6">
-                <div class="table-responsive">
-                    <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-5">
-                
-                        <tbody>
-                            @include('admin.perusahaan.loker_applicants_table', [
-                            'loker' => $loker,
-                            'rankedApplicants' => $rankedApplicants,
-                            'mlError' => $mlError,
-                            ])
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        @include('admin.perusahaan.loker_applicants_section')
     </div>
 </div>
 @endsection

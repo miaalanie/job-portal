@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 
 class PerusahaanLokerController extends Controller
 {
@@ -224,6 +225,9 @@ class PerusahaanLokerController extends Controller
         }
     }
 
+    // PerusahaanLokerController.php
+
+    // ── showApplicants: ML dihapus, eager load minimal ──────────────────────
     public function showApplicants($id)
     {
         try {
@@ -232,6 +236,30 @@ class PerusahaanLokerController extends Controller
             $loker = Lowongan::with([
                 'register.even',
                 'register.perusahaan',
+                'kategori',
+            ])
+                ->withCount('lamarans')
+                ->findOrFail($decryptedId);
+
+            if ($loker->register->idperusahaan != Auth::user()->idperusahaan) {
+                abort(403);
+            }
+
+            // Tidak ada ML call di sini — tabel load async
+            return view('admin.perusahaan.loker_applicants', compact('loker'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal memuat detail pelamar: ' . $e->getMessage());
+        }
+    }
+
+    // ── loadApplicantsRanking: endpoint AJAX baru ────────────────────────────
+    public function loadApplicantsRanking($id)
+    {
+        try {
+            $decryptedId = Crypt::decrypt($id);
+
+            $loker = Lowongan::with([
+                'register.perusahaan',    // butuh untuk buildLowonganPayload (nama + logo)
                 'kategori',
                 'lamarans.pelamar',
                 'lamarans.pelamar.skills',
@@ -242,14 +270,11 @@ class PerusahaanLokerController extends Controller
                 ->findOrFail($decryptedId);
 
             if ($loker->register->idperusahaan != Auth::user()->idperusahaan) {
-                abort(403);
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
             }
 
-            // hit ML service untuk ranking
             $rankingResult = $this->mlService->rankApplicants($loker);
 
-            // kalau ML service gagal, tetap tampilkan halaman
-            // tapi $rankedApplicants kosong — blade handle state ini
             $rankedApplicants = $rankingResult['success']
                 ? collect($rankingResult['ranked_applicants'])->keyBy('pelamar_id')
                 : collect();
@@ -258,13 +283,25 @@ class PerusahaanLokerController extends Controller
                 ? ($rankingResult['message'] ?? 'Gagal menghubungi ML service.')
                 : null;
 
-            return view('admin.perusahaan.loker_applicants', compact(
-                'loker',
-                'rankedApplicants',
-                'mlError'
-            ));
+            // Render partial server-side → kirim sebagai HTML string
+            $html = view(
+                'admin.perusahaan.loker_applicants_table',
+                compact('loker', 'rankedApplicants', 'mlError')
+            )->render();
+
+            return response()->json([
+                'success'     => true,
+                'html'        => $html,
+                'total'       => $loker->lamarans_count,
+                'has_ranking' => $rankedApplicants->isNotEmpty(),
+                'ml_error'    => $mlError,
+            ]);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal memuat detail pelamar: ' . $e->getMessage());
+            Log::error('loadApplicantsRanking error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(), // ← ini tampil di badge error
+            ], 500);
         }
     }
 

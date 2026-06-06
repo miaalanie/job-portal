@@ -169,6 +169,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/perusahaan/loker/{id}/edit', [PerusahaanLokerController::class, 'edit'])->name('admin.perusahaan.loker.edit');
     Route::post('/perusahaan/loker/{id}/update', [PerusahaanLokerController::class, 'update'])->name('admin.perusahaan.loker.update');
     Route::get('/perusahaan/loker/{id}/applicants', [PerusahaanLokerController::class, 'showApplicants'])->name('admin.perusahaan.loker.applicants');
+    Route::get('/perusahaan/loker/{id}/applicants-ranking', [PerusahaanLokerController::class, 'loadApplicantsRanking'])->name('admin.perusahaan.loker.applicants-ranking');
     Route::get('/perusahaan/loker/{id}/attendance', [PerusahaanLokerController::class, 'attendance'])->name('admin.perusahaan.loker.attendance');
     Route::post('/perusahaan/loker/{id}/attendance', [PerusahaanLokerController::class, 'updateAttendance'])->name('admin.perusahaan.loker.attendance.update');
     Route::post('/perusahaan/loker/{id}/toggle-status', [PerusahaanLokerController::class, 'toggleStatus'])->name('admin.perusahaan.loker.toggle-status');
