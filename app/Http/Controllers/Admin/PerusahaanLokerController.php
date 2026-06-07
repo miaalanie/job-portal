@@ -252,14 +252,13 @@ class PerusahaanLokerController extends Controller
         }
     }
 
-    // ── loadApplicantsRanking: endpoint AJAX baru ────────────────────────────
-    public function loadApplicantsRanking($id)
+    public function loadApplicantsRanking($id): JsonResponse
     {
         try {
             $decryptedId = Crypt::decrypt($id);
 
             $loker = Lowongan::with([
-                'register.perusahaan',    // butuh untuk buildLowonganPayload (nama + logo)
+                'register.perusahaan',
                 'kategori',
                 'lamarans.pelamar',
                 'lamarans.pelamar.skills',
@@ -273,8 +272,7 @@ class PerusahaanLokerController extends Controller
                 return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
             }
 
-            $rankingResult = $this->mlService->rankApplicants($loker);
-
+            $rankingResult   = $this->mlService->rankApplicants($loker);
             $rankedApplicants = $rankingResult['success']
                 ? collect($rankingResult['ranked_applicants'])->keyBy('pelamar_id')
                 : collect();
@@ -283,25 +281,52 @@ class PerusahaanLokerController extends Controller
                 ? ($rankingResult['message'] ?? 'Gagal menghubungi ML service.')
                 : null;
 
-            // Render partial server-side → kirim sebagai HTML string
-            $html = view(
-                'admin.perusahaan.loker_applicants_table',
-                compact('loker', 'rankedApplicants', 'mlError')
-            )->render();
+            // Merge data lamaran + ranking, format tanggal di sini
+            $lamarans = $loker->lamarans
+                ->map(function ($lamaran) use ($rankedApplicants) {
+                    $pelamar  = $lamaran->pelamar;
+                    $rankData = $rankedApplicants->get($pelamar?->id ?? 0);
+
+                    return [
+                        'namalengkap'         => $pelamar?->namalengkap ?? 'Tidak Ada Data',
+                        'foto_url'            => $pelamar?->foto ? asset('storage/' . $pelamar->foto) : null,
+                        'alamatlengkap'       => $pelamar?->alamatlengkap ?? '-',
+                        'tanggalmelamar'      => \Carbon\Carbon::parse($lamaran->tanggalmelamar)->format('d F Y'),
+                        'tanggalmelamar_diff' => \Carbon\Carbon::parse($lamaran->tanggalmelamar)->diffForHumans(),
+                        'tanggal_datang'      => $lamaran->tanggal_datang
+                            ? \Carbon\Carbon::parse($lamaran->tanggal_datang)->format('d F Y')
+                            : null,
+                        'statusditerima'      => $lamaran->statusditerima,
+                        'cv_url'              => $pelamar
+                            ? route('admin.perusahaan.pelamar.download-cv', encrypt($pelamar->id))
+                            : null,
+                        // Ranking — null kalau ML gagal
+                        'rank'             => $rankData['rank'] ?? null,
+                        'match_percentage' => $rankData['match_percentage'] ?? null,
+                        'label'            => $rankData['label'] ?? null,
+                        'color'            => $rankData['color'] ?? null,
+                        'semantic_score'   => $rankData['semantic_score'] ?? null,
+                        'skill_score'      => $rankData['skill_score'] ?? null,
+                        'education_score'  => $rankData['education_score'] ?? null,
+                        'experience_score' => $rankData['experience_score'] ?? null,
+                        'tags'             => $rankData['tags'] ?? [],
+                    ];
+                })
+                ->sortBy(fn($l) => $l['rank'] ?? 9999)
+                ->values()
+                ->toArray();
 
             return response()->json([
-                'success'     => true,
-                'html'        => $html,
-                'total'       => $loker->lamarans_count,
-                'has_ranking' => $rankedApplicants->isNotEmpty(),
-                'ml_error'    => $mlError,
+                'success'        => true,
+                'total'          => $loker->lamarans_count,
+                'has_ranking'    => $rankedApplicants->isNotEmpty(),
+                'ml_error'       => $mlError,
+                'kategorilokasi' => $loker->kategorilokasi,
+                'lamarans'       => $lamarans,
             ]);
         } catch (\Exception $e) {
             Log::error('loadApplicantsRanking error', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(), // ← ini tampil di badge error
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
