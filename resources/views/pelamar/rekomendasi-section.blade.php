@@ -9,7 +9,7 @@
         </span>
     </div>
 
-    <div class="card-body p-4">
+    <div class="card-body p-3">
 
         {{-- Skeleton --}}
         <div id="rekomendasi-skeleton" class="vstack gap-3">
@@ -40,7 +40,7 @@
         </div>
 
         {{-- Hasil --}}
-        <div id="rekomendasi-list" class="vstack gap-3 d-none" style="max-height: 420px; overflow-y: auto; padding-right: 4px;"></div>
+        <div id="rekomendasi-list" class="vstack gap-3 d-none" style="max-height: 420px; overflow-y: auto; overflow-x: hidden; padding-right: 4px"></div>
 
     </div>
 </div>
@@ -153,7 +153,7 @@ function buildCard(job) {
 
     return '<div class="job-recommend-card p-3 rounded-4 d-flex align-items-center gap-3">'
         + '<div class="bg-light rounded-4 p-2 d-flex align-items-center justify-content-center shadow-sm" style="width:50px;height:50px;min-width:50px;">' + logoHtml + '</div>'
-        + '<div class="flex-grow-1 min-w-0">'
+        + '<div class="flex-grow-1 overflow-hidden">'
             + '<div class="d-flex align-items-start justify-content-between gap-2">'
                 + '<h6 class="fw-bold text-dark fs-7 mb-1 text-truncate" style="max-width:180px;">' + esc(job.namalowongan) + '</h6>'
                 + '<span class="score-badge ' + scoreClass + ' flex-shrink-0">' + job.match_percentage + '%</span>'

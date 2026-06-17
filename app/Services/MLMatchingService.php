@@ -75,6 +75,8 @@ class  MLMatchingService
             'id'            => $pelamar->id,
             'namalengkap'   => $pelamar->namalengkap,
             'deskripsidiri' => $pelamar->deskripsidiri,
+            'tanggallahir' => $pelamar->tanggallahir,
+            'jeniskelamin' => $pelamar->jeniskelamin,
 
             // Skills: hanya namaskill + keterangan yang dibutuhkan ML
             'skills' => $pelamar->skills->map(fn($s) => [
