@@ -1,59 +1,122 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Nusa Raya Career Day - Job Portal Application
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi job portal untuk mengelola job fair "Nusa Raya Career Day". Platform ini memudahkan pencari kerja untuk menemukan lowongan yang sesuai dan menghadiri event walk-in interview, serta membantu perusahaan dalam merekrut talenta terbaik.
 
-## About Laravel
+## 📱 Akses Aplikasi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Link Aplikasi:** [https://nusarayacareerday.com/](https://nusarayacareerday.com/)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🎯 Tentang Aplikasi
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Nusa Raya Career Day Job Portal adalah platform terintegrasi yang menghubungkan pencari kerja dengan perusahaan di event job fair. Aplikasi ini dirancang untuk memberikan pengalaman terbaik bagi kedua belah pihak dengan fitur rekomendasi cerdas dan manajemen event yang efisien.
 
-## Learning Laravel
+### Fitur Utama:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Registrasi Pencari Kerja**: Pengguna dapat mendaftar dan membuat profil profesional mereka
+- **Pencarian & Rekomendasi Lowongan**: Sistem rekomendasi berbasis AI untuk mencocokkan kandidat dengan lowongan yang relevan
+- **Event Management**: Browsing dan pendaftaran ke berbagai job fair events
+- **Walk-in Interview**: Sistem pendaftaran untuk walk-in interview langsung di venue job fair
+- **Application Tracking**: Tracking status lamaran untuk pencari kerja
+- **Ranking Lamaran**: Sistem ranking lamaran otomatis untuk perusahaan agar mudah memilih kandidat terbaik
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 👥 Alur Pengguna (User Flow)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Untuk Pencari Kerja:
 
-### Premium Partners
+1. **Registrasi & Login**
+   - Calon pekerja mendaftar akun di aplikasi
+   - Melengkapi profil dengan data pribadi, keahlian, dan pengalaman kerja
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+2. **Jelajahi Event**
+   - Melihat daftar job fair dan event yang tersedia
+   - Membaca detail event termasuk waktu, lokasi, dan perusahaan yang berpartisipasi
 
-## Contributing
+3. **Pilih Event & Daftar**
+   - Memilih event yang ingin dihadiri
+   - Melakukan registrasi untuk mengikuti event tersebut
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. **Browse Lowongan**
+   - Melihat lowongan dari perusahaan di event yang terpilih
+   - Mendapatkan rekomendasi lowongan yang sesuai dengan profil mereka
 
-## Code of Conduct
+5. **Walk-in Interview**
+   - Datang ke venue job fair pada waktu yang dijadwalkan
+   - Bertemu langsung dengan recruiter perusahaan
+   - Melakukan interview di booth perusahaan
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6. **Track Aplikasi**
+   - Memantau status lamaran yang telah dikirim
+   - Menerima notifikasi update dari perusahaan
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🤖 ML Service - Content-Based Filtering
 
-## License
+### Sistem Rekomendasi Lowongan
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Aplikasi menggunakan teknologi **Content-Based Filtering** untuk memberikan rekomendasi lowongan yang paling sesuai dengan profil pencari kerja:
+
+**Cara Kerja:**
+- **Analisis Profil Kandidat**: Sistem menganalisis skills, pengalaman, education, dan preferensi kerja dari profil pengguna
+- **Matching dengan Lowongan**: Setiap lowongan di-parse untuk ekstrak requirements, skills yang dibutuhkan, dan karakteristik lainnya
+- **Scoring & Ranking**: Sistem memberikan skor kecocokan (similarity score) berdasarkan perbandingan konten profil dengan requirement lowongan
+- **Personalisasi**: Rekomendasi ditampilkan berdasarkan skor tertinggi, memastikan pencari kerja melihat lowongan yang paling relevan terlebih dahulu
+
+**Benefit:**
+- Menghemat waktu pencari kerja dalam mencari lowongan yang sesuai
+- Meningkatkan akurasi matching antara kandidat dan posisi yang tersedia
+- Memberikan pengalaman yang lebih personal dan relevan
+
+### Sistem Ranking Lamaran (Untuk Perusahaan)
+
+Aplikasi menyediakan fitur ranking lamaran otomatis untuk membantu perusahaan dalam mengidentifikasi kandidat terbaik:
+
+**Cara Kerja:**
+- **Analisis Lamaran**: Sistem menganalisis semua lamaran yang masuk untuk posisi tertentu
+- **Scoring Kandidat**: Setiap kandidat di-score berdasarkan:
+  - Kecocokan skills dengan job requirements
+  - Pengalaman yang relevan dengan posisi
+  - Level pendidikan yang dibutuhkan
+  - Faktor-faktor lainnya yang spesifik untuk pekerjaan
+- **Automatic Ranking**: Lamaran di-rank secara otomatis dari kandidat terbaik hingga kurang sesuai
+- **Filtering & Shortlisting**: Perusahaan dapat dengan mudah melihat top candidates dan melakukan shortlisting
+
+**Benefit:**
+- Menghemat waktu HR dalam mengevaluasi ratusan lamaran
+- Meningkatkan kualitas kandidat yang dipilih untuk interview
+- Memastikan tidak ada kandidat potensial yang terlewat
+- Mempercepat proses hiring secara keseluruhan
+
+---
+
+## 🏗️ Struktur Teknis
+
+**Technology Stack:**
+- **Backend**: Laravel (PHP)
+- **Frontend**: Vue.js / Inertia.js
+- **Database**: MySQL
+- **ML/Recommendation Engine**: Python (Content-Based Filtering)
+- **Styling**: Tailwind CSS
+
+**Key Features:**
+- RESTful API
+- Real-time Event Updates
+- User Authentication & Authorization
+- Database Migrations & Seeding
+- Multi-role Support (Admin, Company, Job Seeker)
+
+---
+
+## 🚀 Keunggulan Platform
+
+✅ **User-Friendly**: Interface yang intuitif dan mudah digunakan  
+✅ **Smart Matching**: Teknologi AI untuk rekomendasi yang akurat  
+✅ **Efisien**: Menghemat waktu recruiter dan pencari kerja  
+✅ **Terukur**: Data-driven insights untuk recruitment decision  
+✅ **Scalable**: Dapat menangani ribuan kandidat dan lowongan  
+
+---
+
+Untuk informasi lebih lanjut tentang event atau pertanyaan lainnya, silakan kunjungi website kami di [https://nusarayacareerday.com/](https://nusarayacareerday.com/)
