@@ -25,7 +25,7 @@ use App\Http\Controllers\Admin\PelamarEventController;
 use App\Http\Controllers\Admin\RegistrasiLowonganController;
 use Illuminate\Support\Facades\Route;
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::get('lang/{locale}', function ($locale) {
     if (in_array($locale, ['id', 'en'])) {
@@ -33,6 +33,7 @@ Route::get('lang/{locale}', function ($locale) {
     }
     return redirect()->back();
 })->name('lang.switch');
+
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pelamar\RekomendasiController;
 use App\Http\Controllers\PerusahaanRegisterController;
@@ -45,6 +46,7 @@ Route::get('/perusahaan/activate/{token}', [PerusahaanRegisterController::class,
 
 // Applicant Registration Suite
 use App\Http\Controllers\PelamarRegisterController;
+
 Route::get('/register-pelamar', [PelamarRegisterController::class, 'showRegistrationForm'])->name('pelamar.register');
 Route::post('/register-pelamar', [PelamarRegisterController::class, 'register'])->name('pelamar.register.post');
 Route::get('/activate-pelamar/{token}', [PelamarRegisterController::class, 'activate'])->name('pelamar.activate');
@@ -52,7 +54,7 @@ Route::get('/activate-pelamar/{token}', [PelamarRegisterController::class, 'acti
 Route::middleware('auth')->group(function () {
     Route::get('/complete-profile', [PelamarRegisterController::class, 'showCompleteDataForm'])->name('pelamar.complete-data');
     Route::post('/complete-profile', [PelamarRegisterController::class, 'storeCompleteData'])->name('pelamar.complete-data.post');
-    
+
     // Applicant Dashboard & Activities
     Route::get('/pelamar/dashboard', [\App\Http\Controllers\Pelamar\DashboardController::class, 'index'])->name('pelamar.dashboard');
     Route::get('rekomendasi', [RekomendasiController::class, 'getRekomendasi'])->name('pelamar.rekomendasi');
@@ -85,7 +87,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/company-validation/{id}', [AdminController::class, 'showValidationDetail'])->name('admin.perusahaan.validation-detail');
     Route::post('/company-validation/{id}/approve', [AdminController::class, 'validateCompany'])->name('admin.perusahaan.approve');
     Route::post('/company-validation/{id}/reject', [AdminController::class, 'rejectCompany'])->name('admin.perusahaan.reject');
-    
+
     // Event Registration Approval
     Route::get('/event-registration/{id}', [AdminController::class, 'showEventRegistrationDetail'])->name('admin.event-registration.detail');
     Route::post('/event-registration/{id}/approve', [AdminController::class, 'approveEventRegistration'])->name('admin.event-registration.approve');
@@ -101,11 +103,11 @@ Route::middleware('auth')->prefix('admin')->group(function () {
 
     // Pelamar Event (khusus list pelamar scope event)
     Route::get('/pelamar/even', [PelamarEventController::class, 'index'])->name('admin.pelamar.even');
-    
+
     // Detailed Registration Hub (Audit & Approval)
     Route::get('/event-registration/{id}', [EventRegistrationController::class, 'showDetail'])->name('admin.event-registration.detail');
     Route::post('/event-registration/{id}/approve', [EventRegistrationController::class, 'approve'])->name('admin.event-registration.approve');
-    
+
     // Kategori Perusahaan Management
     Route::resource('/kategori-perusahaan', KategoriPerusahaanController::class)->names([
         'index' => 'admin.kategori-perusahaan.index',
@@ -129,7 +131,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/pencari-kerja/{id}', [PencariKerjaController::class, 'show'])->name('admin.pencari-kerja.show');
     Route::get('/pencari-kerja/{id}/cv', [PencariKerjaController::class, 'downloadCV'])->name('admin.pencari-kerja.download-cv');
     Route::post('/pencari-kerja/{id}/send-mail', [PencariKerjaController::class, 'sendMail'])->name('admin.pencari-kerja.send-mail');
-    
+
     // Geographic AJAX Endpoints (Talent Focus)
     Route::get('/pencari-kerja/get-cities/{provinceId}', [PencariKerjaController::class, 'getCities']);
     Route::get('/pencari-kerja/get-districts/{cityId}', [PencariKerjaController::class, 'getDistricts']);
@@ -146,7 +148,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     // Admin Perusahaan Profile
     Route::get('/perusahaan/profile', [PerusahaanProfileController::class, 'index'])->name('admin.perusahaan.profile');
     Route::post('/perusahaan/profile', [PerusahaanProfileController::class, 'update'])->name('admin.perusahaan.profile.update');
-    
+
     // Personal Profile Management
     Route::get('/profile', [ProfileController::class, 'index'])->name('admin.profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
@@ -159,12 +161,12 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/perusahaan/pelamar/{id}/cv', [PerusahaanPelamarController::class, 'downloadCV'])->name('admin.perusahaan.pelamar.download-cv');
     Route::post('/perusahaan/pelamar/{id}/send-mail', [PerusahaanPelamarController::class, 'sendMail'])->name('admin.perusahaan.pelamar.send-mail');
     Route::get('/perusahaan/pelamar/export', [PerusahaanPelamarController::class, 'export'])->name('admin.perusahaan.pelamar.export');
-    
+
     // Lowongan Perusahaan Management (Specific to Event Registration)
     Route::get('/perusahaan/event/{id}/create-loker', [PerusahaanLokerController::class, 'create'])->name('admin.perusahaan.loker.create');
     Route::post('/perusahaan/event/{id}/create-loker', [PerusahaanLokerController::class, 'store'])->name('admin.perusahaan.loker.store');
     Route::post('/perusahaan/event/{id}/import-loker', [PerusahaanLokerController::class, 'import'])->name('admin.perusahaan.loker.import');
-    
+
     // Per-Vacancy Actions
     Route::get('/perusahaan/loker/{id}/edit', [PerusahaanLokerController::class, 'edit'])->name('admin.perusahaan.loker.edit');
     Route::post('/perusahaan/loker/{id}/update', [PerusahaanLokerController::class, 'update'])->name('admin.perusahaan.loker.update');
@@ -173,6 +175,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/perusahaan/loker/{id}/attendance', [PerusahaanLokerController::class, 'attendance'])->name('admin.perusahaan.loker.attendance');
     Route::post('/perusahaan/loker/{id}/attendance', [PerusahaanLokerController::class, 'updateAttendance'])->name('admin.perusahaan.loker.attendance.update');
     Route::post('/perusahaan/loker/{id}/toggle-status', [PerusahaanLokerController::class, 'toggleStatus'])->name('admin.perusahaan.loker.toggle-status');
+    Route::post('/perusahaan/loker/master-jurusan/store', [PerusahaanLokerController::class, 'storeJurusan'])->name('admin.perusahaan.loker.master-jurusan.store');
+    Route::post('/perusahaan/loker/master-skill/store', [PerusahaanLokerController::class, 'storeSkill'])->name('admin.perusahaan.loker.master-skill.store');
 
     // Attendance (Absensi) Management
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('admin.absensi.index');
@@ -237,7 +241,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::delete('/register/{id}', [RegisterController::class, 'destroy'])->name('admin.register.destroy');
 });
 // Unified Artisan System Maintenance Route
-Route::get('/clear-all-cache', function() {
+Route::get('/clear-all-cache', function () {
     \Illuminate\Support\Facades\Artisan::call('config:cache');
     \Illuminate\Support\Facades\Artisan::call('route:cache');
     \Illuminate\Support\Facades\Artisan::call('view:cache');

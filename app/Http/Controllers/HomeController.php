@@ -61,7 +61,9 @@ class HomeController extends Controller
             $vacancy = Lowongan::with([
                 'register.perusahaan.kategori', 
                 'register.even.sesis', 
-                'kategori'
+                'kategori',
+                'skills.skill',
+                'jurusans.jurusan',
             ])->findOrFail($decryptedId);
 
             $event = $vacancy->register->even;

@@ -7,6 +7,8 @@ use App\Models\Register;
 use App\Models\Lowongan;
 use App\Models\Kategorilowongan;
 use App\Models\Kehadiran;
+use App\Models\MasterSkill;
+use App\Models\MasterJurusan;
 use App\Services\MLMatchingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,6 +68,10 @@ class PerusahaanLokerController extends Controller
 
             $categories = Kategorilowongan::all();
 
+            // --- TAMBAHAN BARU UNTUK FORM CREATE ---
+            $masterSkills = \App\Models\MasterSkill::orderBy('namaskill')->get();
+            $masterJurusans = \App\Models\MasterJurusan::orderBy('namajurusan')->get();
+
             // For Import: Get unique vacancies from other event registrations by this company
             $pastLowongans = Lowongan::whereHas('register', function ($q) {
                 $q->where('idperusahaan', Auth::user()->idperusahaan);
@@ -75,7 +81,8 @@ class PerusahaanLokerController extends Controller
                 ->get()
                 ->unique('namalowongan');
 
-            return view('admin.perusahaan.loker_create', compact('registration', 'categories', 'pastLowongans'));
+            // Jangan lupa compact masterSkills dan masterJurusans ke view
+            return view('admin.perusahaan.loker_create', compact('registration', 'categories', 'pastLowongans', 'masterSkills', 'masterJurusans'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memuat form tambah lowongan.');
         }
@@ -91,6 +98,15 @@ class PerusahaanLokerController extends Controller
             'kuota' => 'nullable|integer',
             'gaji_awal' => 'nullable',
             'gaji_akhir' => 'nullable',
+
+            // --- VALIDASI TAMBAHAN BARU ---
+            'minimal_pendidikan' => 'nullable|integer|between:1,9',
+            'minimal_pengalaman_bulan' => 'required|integer|min:0',
+            'preferensi_gender' => 'required|in:Semua,Laki-laki,Perempuan',
+            'usia_min' => 'nullable|integer|min:0',
+            'usia_max' => 'nullable|integer|min:0|gte:usia_min',
+            'skills' => 'nullable|array',
+            'jurusans' => 'nullable|array'
         ]);
 
         try {
@@ -105,7 +121,8 @@ class PerusahaanLokerController extends Controller
             $gaji_awal = $request->gaji_awal ? preg_replace('/[^0-9]/', '', $request->gaji_awal) : null;
             $gaji_akhir = $request->gaji_akhir ? preg_replace('/[^0-9]/', '', $request->gaji_akhir) : null;
 
-            Lowongan::create([
+            // 1. Buat data Lowongan Utama
+            $loker = Lowongan::create([
                 'idregister' => $decryptedId,
                 'namalowongan' => $request->namalowongan,
                 'idkategorilowongan' => $request->idkategorilowongan,
@@ -114,9 +131,52 @@ class PerusahaanLokerController extends Controller
                 'kuota' => $request->kuota,
                 'gaji_awal' => $gaji_awal,
                 'gaji_akhir' => $gaji_akhir,
-                'status' => 1, // Auto-active if registration is active
+                'status' => 1,
                 'useradd' => Auth::id(),
+
+                // --- DATA KRITERIA BARU ---
+                'minimal_pendidikan' => $request->minimal_pendidikan,
+                'minimal_pengalaman_bulan' => $request->minimal_pengalaman_bulan,
+                'preferensi_gender' => $request->preferensi_gender,
+                'usia_min' => $request->usia_min ?? 0,
+                'usia_max' => $request->usia_max ?? 0,
             ]);
+
+            // 2. PROSES SAVE TABLE SKILLS (Mendukung Tag Baru)
+            if ($request->has('skills')) {
+                foreach ($request->skills as $skillInput) {
+                    if (is_numeric($skillInput)) {
+                        $idSkill = $skillInput;
+                    } else {
+                        // Jika user input teks baru, simpan ke MasterSkill dulu
+                        $newSkill = \App\Models\MasterSkill::firstOrCreate(
+                            ['namaskill' => trim($skillInput)]
+                        );
+                        $idSkill = $newSkill->id;
+                    }
+
+                    // Hubungkan ke Lowongan baru
+                    $loker->skills()->create(['idskill' => $idSkill]);
+                }
+            }
+
+            // 3. PROSES SAVE TABLE JURUSANS (Mendukung Tag Baru)
+            if ($request->has('jurusans')) {
+                foreach ($request->jurusans as $jurusanInput) {
+                    if (is_numeric($jurusanInput)) {
+                        $idJurusan = $jurusanInput;
+                    } else {
+                        // Jika user input teks baru, simpan ke MasterJurusan dulu
+                        $newJurusan = \App\Models\MasterJurusan::firstOrCreate(
+                            ['namajurusan' => trim($jurusanInput)]
+                        );
+                        $idJurusan = $newJurusan->id;
+                    }
+
+                    // Hubungkan ke Lowongan baru
+                    $loker->jurusans()->create(['idjurusan' => $idJurusan]);
+                }
+            }
 
             return redirect()->route('admin.perusahaan.event.my-detail', $id)->with('success', 'Lowongan berhasil dipublikasikan.');
         } catch (\Exception $e) {
@@ -168,9 +228,13 @@ class PerusahaanLokerController extends Controller
     {
         try {
             $decryptedId = Crypt::decrypt($id);
-            $loker = Lowongan::with('register')->findOrFail($decryptedId);
 
-            // Security check
+            $loker = Lowongan::with([
+                'register',
+                'skills.skill',
+                'jurusans.jurusan',
+            ])->findOrFail($decryptedId);
+
             if ($loker->register->idperusahaan != Auth::user()->idperusahaan) {
                 abort(403);
             }
@@ -178,7 +242,19 @@ class PerusahaanLokerController extends Controller
             $registration = $loker->register;
             $categories = Kategorilowongan::all();
 
-            return view('admin.perusahaan.loker_edit', compact('loker', 'registration', 'categories'));
+            $masterSkills = MasterSkill::orderBy('namaskill')->get();
+            $masterJurusans = MasterJurusan::orderBy('namajurusan')->get();
+
+            return view(
+                'admin.perusahaan.loker_edit',
+                compact(
+                    'loker',
+                    'registration',
+                    'categories',
+                    'masterSkills',
+                    'masterJurusans'
+                )
+            );
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memuat data lowongan.');
         }
@@ -194,6 +270,17 @@ class PerusahaanLokerController extends Controller
             'kuota' => 'nullable|integer',
             'gaji_awal' => 'nullable',
             'gaji_akhir' => 'nullable',
+
+            // --- VALIDASI TAMBAHAN BARU ---
+            'minimal_pendidikan' => 'nullable|integer|between:1,9',
+            'minimal_pengalaman_bulan' => 'required|integer|min:0',
+            'preferensi_gender' => 'required|in:Semua,Laki-laki,Perempuan',
+            'usia_min' => 'nullable|integer|min:0',
+            'usia_max' => 'nullable|integer|min:0|gte:usia_min', // Usia max harus lebih besar/sama dengan usia min
+
+            // --- VALIDASI UNTUK ARRAY SKILLS DAN JURUSANS ---
+            'skills' => 'nullable|array',
+            'jurusans' => 'nullable|array'
         ]);
 
         try {
@@ -217,7 +304,68 @@ class PerusahaanLokerController extends Controller
                 'gaji_awal' => $gaji_awal,
                 'gaji_akhir' => $gaji_akhir,
                 'userupdate' => Auth::id(),
+
+                // --- DATA TAMBAHAN BARU YANG DI-UPDATE ---
+                'minimal_pendidikan' => $request->minimal_pendidikan,
+                'minimal_pengalaman_bulan' => $request->minimal_pengalaman_bulan,
+                'preferensi_gender' => $request->preferensi_gender,
+                'usia_min' => $request->usia_min ?? 0,
+                'usia_max' => $request->usia_max ?? 0,
+
             ]);
+
+            // 2. PROSES UPDATE TABLE SKILLS (Mendukung Tag Baru via Relasi HasMany)
+            $skillIds = [];
+            if ($request->has('skills')) {
+                foreach ($request->skills as $skillInput) {
+                    if (is_numeric($skillInput)) {
+                        $skillIds[] = $skillInput;
+                    } else {
+                        // Jika teks baru, simpan ke MasterSkill terlebih dahulu
+                        $newSkill = \App\Models\MasterSkill::firstOrCreate(
+                            ['namaskill' => trim($skillInput)]
+                        );
+                        $skillIds[] = $newSkill->id;
+                    }
+                }
+            }
+
+            // Hapus skill lama yang tidak dipilih lagi oleh user
+            $loker->skills()->whereNotIn('idskill', $skillIds)->delete();
+
+            // Tambahkan atau pastikan skill yang dipilih terdaftar di lowongan ini
+            foreach ($skillIds as $idSkill) {
+                $loker->skills()->updateOrCreate(
+                    ['idskill' => $idSkill] // Jika kombinasi idlowongan & idskill sudah ada, biarkan. Jika belum, buat baru.
+                );
+            }
+
+
+            // 3. PROSES UPDATE TABLE JURUSANS (Mendukung Tag Baru via Relasi HasMany)
+            $jurusanIds = [];
+            if ($request->has('jurusans')) {
+                foreach ($request->jurusans as $jurusanInput) {
+                    if (is_numeric($jurusanInput)) {
+                        $jurusanIds[] = $jurusanInput;
+                    } else {
+                        // Jika teks baru, simpan ke MasterJurusan terlebih dahulu
+                        $newJurusan = \App\Models\MasterJurusan::firstOrCreate(
+                            ['namajurusan' => trim($jurusanInput)]
+                        );
+                        $jurusanIds[] = $newJurusan->id;
+                    }
+                }
+            }
+
+            // Hapus jurusan lama yang tidak dipilih lagi oleh user
+            $loker->jurusans()->whereNotIn('idjurusan', $jurusanIds)->delete();
+
+            // Tambahkan atau pastikan jurusan yang dipilih terdaftar di lowongan ini
+            foreach ($jurusanIds as $idJurusan) {
+                $loker->jurusans()->updateOrCreate(
+                    ['idjurusan' => $idJurusan] // Jika kombinasi idlowongan & idjurusan sudah ada, biarkan. Jika belum, buat baru.
+                );
+            }
 
             return redirect()->route('admin.perusahaan.event.my-detail', encrypt($loker->idregister))->with('success', 'Lowongan berhasil diperbarui.');
         } catch (\Exception $e) {
@@ -225,9 +373,6 @@ class PerusahaanLokerController extends Controller
         }
     }
 
-    // PerusahaanLokerController.php
-
-    // ── showApplicants: ML dihapus, eager load minimal ──────────────────────
     public function showApplicants($id)
     {
         try {
@@ -237,6 +382,8 @@ class PerusahaanLokerController extends Controller
                 'register.even',
                 'register.perusahaan',
                 'kategori',
+                'skills.skill',
+                'jurusans.jurusan',
             ])
                 ->withCount('lamarans')
                 ->findOrFail($decryptedId);
@@ -245,13 +392,12 @@ class PerusahaanLokerController extends Controller
                 abort(403);
             }
 
-            // Tidak ada ML call di sini — tabel load async
             return view('admin.perusahaan.loker_applicants', compact('loker'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal memuat detail pelamar: ' . $e->getMessage());
         }
     }
-
+    
     public function loadApplicantsRanking($id): JsonResponse
     {
         try {
@@ -406,5 +552,45 @@ class PerusahaanLokerController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal mengubah status lowongan.');
         }
+    }
+
+    public function storeSkill(Request $request)
+    {
+        $request->validate([
+            'namaskill' => 'required|string|max:255',
+        ]);
+
+        $nama = trim($request->namaskill);
+
+        $skill = MasterSkill::whereRaw('LOWER(namaskill) = ?', [strtolower($nama)])->first();
+
+        if (!$skill) {
+            $skill = MasterSkill::create(['namaskill' => $nama]);
+        }
+
+        return response()->json([
+            'id'   => $skill->id,
+            'text' => $skill->namaskill,
+        ]);
+    }
+
+    public function storeJurusan(Request $request)
+    {
+        $request->validate([
+            'namajurusan' => 'required|string|max:255',
+        ]);
+
+        $nama = trim($request->namajurusan);
+
+        $jurusan = MasterJurusan::whereRaw('LOWER(namajurusan) = ?', [strtolower($nama)])->first();
+
+        if (!$jurusan) {
+            $jurusan = MasterJurusan::create(['namajurusan' => $nama]);
+        }
+
+        return response()->json([
+            'id'   => $jurusan->id,
+            'text' => $jurusan->namajurusan,
+        ]);
     }
 }
