@@ -37,6 +37,8 @@ class RekomendasiController extends Controller
             'register.perusahaan',
             'register.even',
             'kategori',
+            'skills.skill',      // ← nested sampai MasterSkill
+            'jurusans.jurusan',
         ])
             ->whereHas('register', function ($q) {
                 $q->where('aktivasi', 1);

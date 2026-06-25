@@ -52,10 +52,10 @@ class PelamarRegisterController extends Controller
 
             // Send Activation Email
             Mail::to($user->email)->send(new UserActivationMail(
-                $user, 
-                $request->name, 
-                $request->name, 
-                $user->email, 
+                $user,
+                $request->name,
+                $request->name,
+                $user->email,
                 $request->password
             ));
 
@@ -65,7 +65,6 @@ class PelamarRegisterController extends Controller
                 'status' => 'success',
                 'message' => 'Registrasi berhasil! Silakan cek email Anda untuk aktivasi akun.'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Applicant Registration Error: ' . $e->getMessage());
@@ -81,7 +80,7 @@ class PelamarRegisterController extends Controller
         $user = auth()->user();
         $pelamar = $user->pelamar()->with(['pendidikans', 'pengalamans', 'dokumens', 'skills'])->first();
         $provinsis = Provinsi::all();
-        
+
         return view('frontend.pelamar_complete_data', compact('provinsis', 'pelamar'));
     }
 
@@ -103,7 +102,7 @@ class PelamarRegisterController extends Controller
             'tinggibadan' => 'nullable|integer',
             'beratbadan' => 'nullable|integer',
             'foto_profil' => ($idPelamar ? 'nullable' : 'required') . '|image|mimes:jpg,jpeg,png|max:1024',
-            
+
             // Pendidikan (Arrays)
             'edu_kategori.*' => 'required|string',
             'edu_nama.*' => 'required|string',
@@ -113,12 +112,14 @@ class PelamarRegisterController extends Controller
             // Keahlian/Skills (Arrays)
             'skill_nama.*' => 'required|string|max:255',
             'skill_ket.*' => 'required|in:Kurang,Cukup,Baik,Sangat Baik',
-            
+
             // Pengalaman (Arrays) - Conditional
             'exp_nama.*' => 'required_without:no_experience|nullable|string',
             'exp_posisi.*' => 'required_without:no_experience|nullable|string',
             'exp_awal.*' => 'required_without:no_experience|nullable|integer',
-            
+            'exp_bulan_awal.*' => 'required_without:no_experience|nullable|integer|min:1|max:12',
+            'exp_bulan_akhir.*' => 'nullable|integer|min:1|max:12',
+
             // Dokumen
             'doc_file_ktp' => ($idPelamar ? 'nullable' : 'required') . '|mimes:pdf,jpg,jpeg,png|max:2048',
             'doc_file_kuning' => ($idPelamar ? 'nullable' : 'required') . '|mimes:pdf,jpg,jpeg,png|max:2048',
@@ -200,13 +201,17 @@ class PelamarRegisterController extends Controller
             if (!$request->has('no_experience') && $request->has('exp_nama')) {
                 foreach ($request->exp_nama as $index => $nama) {
                     if (empty($nama)) continue;
+                    $aktif = (int)($request->exp_aktif[$index] ?? 0);
+
                     \App\Models\Pelamarpengalaman::create([
                         'idpelamar' => $pelamar->id,
                         'namaperusahaan' => $nama,
                         'posisi' => $request->exp_posisi[$index],
                         'tahunawal' => $request->exp_awal[$index],
+                        'bulanawal'      => $request->exp_bulan_awal[$index] ?? 0,
                         'tahunselesai' => $request->exp_akhir[$index] ?? null,
-                        'aktif' => isset($request->exp_aktif[$index]) ? 1 : 0,
+                        'bulanselesai' => (int)($request->exp_bulan_akhir[$index] ?? 0),
+                        'aktif'        => $aktif,
                         'useradd' => auth()->id(),
                     ]);
                 }
@@ -254,7 +259,6 @@ class PelamarRegisterController extends Controller
                 'message' => 'Profil berhasil divalidasi dan dilengkapi! Akses pencarian kerja telah aktif.',
                 'redirect' => route('pelamar.dashboard')
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Applicant Portfolio Fulfillment Error: ' . $e->getMessage());

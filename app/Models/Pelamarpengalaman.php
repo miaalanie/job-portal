@@ -13,7 +13,9 @@ class Pelamarpengalaman extends Model
         'namaperusahaan', 
         'posisi', 
         'tahunawal', 
+        'bulanawal',
         'tahunselesai', 
+        'bulanselesai',
         'aktif', 
         'useradd', 
         'userupdate'

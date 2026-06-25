@@ -39,6 +39,51 @@
 </div>
 </div>
 
+{{-- Modal: Ranking Detail --}}
+<div class="modal fade" id="rankingDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+
+            {{-- Header --}}
+            <div class="modal-header border-0 px-5 pt-5 pb-2">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-1" id="rankModalName"></h5>
+                    <div id="rankModalBadge"></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body px-5 pb-4">
+
+                {{-- Score Cards --}}
+                <div class="row row-cols-5 g-2 mb-4" id="rankModalScores"></div>
+
+                {{-- Tags --}}
+                <div class="mb-4">
+                    <p class="fw-bold text-dark fs-7 mb-2">
+                        <i class="material-icons fs-6 me-1 align-middle">label</i> Tags
+                    </p>
+                    <div id="rankModalTags"></div>
+                </div>
+
+                {{-- Reasons --}}
+                <div>
+                    <p class="fw-bold text-dark fs-7 mb-2">
+                        <i class="material-icons fs-6 me-1 align-middle">analytics</i> Analisis Detail
+                    </p>
+                    <div id="rankModalReasons"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer border-0 px-5 pb-4 pt-0">
+                <button class="btn btn-sm btn-light rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @push('styles')
 <style>
     @keyframes shimmer {
@@ -63,11 +108,20 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => loadApplicantsTable());
 
+    // ─── State pagination ─────────────────────────────────────────────────────────
+    let _allLamarans = [];
+    let _hasRanking = false;
+    let _kategorilokasi = '';
+    let _currentPage = 1;
+    const PER_PAGE = 10;
+
+    // ─── Load (sama seperti sebelumnya, tapi simpan ke state) ────────────────────
     async function loadApplicantsTable() {
         showAppEl('applicants-skeleton');
         hideAppEl('applicants-error');
         hideAppEl('applicants-result');
         setApplicantsBadge('loading');
+        _currentPage = 1;
 
         try {
             const res = await fetch('{{ route("admin.perusahaan.loker.applicants-ranking", encrypt($loker->id)) }}', {
@@ -78,7 +132,6 @@
             });
 
             if (!res.ok) throw new Error('HTTP ' + res.status);
-
             const data = await res.json();
             hideAppEl('applicants-skeleton');
 
@@ -88,7 +141,12 @@
                 return;
             }
 
-            document.getElementById('applicants-result').innerHTML = buildTable(data);
+            // Simpan ke state
+            _allLamarans = data.lamarans ?? [];
+            _hasRanking = data.has_ranking;
+            _kategorilokasi = data.kategorilokasi;
+
+            renderPage(data); // ml_error & has_ranking dari data asli
             showAppEl('applicants-result');
             setApplicantsBadge('done', data.total, data.has_ranking);
 
@@ -100,7 +158,123 @@
         }
     }
 
-    // ── Build full table dari JSON (mirip buildCard di rekomendasi) ──────────
+    // ─── Render halaman tertentu ──────────────────────────────────────────────────
+    function renderPage(data = null) {
+        const totalPages = Math.ceil(_allLamarans.length / PER_PAGE);
+        _currentPage = Math.max(1, Math.min(_currentPage, totalPages));
+
+        const start = (_currentPage - 1) * PER_PAGE;
+        const sliced = _allLamarans.slice(start, start + PER_PAGE);
+
+        let html = '';
+
+        // ml_error banner — hanya muncul di halaman pertama
+        if (data?.ml_error && _currentPage === 1) {
+            html += '<div class="alert alert-warning d-flex align-items-center justify-content-between mb-4">' +
+                '<div class="d-flex align-items-center">' +
+                '<i class="material-icons me-2 fs-5">warning_amber</i>' +
+                '<div>Ranking tidak tersedia: <strong>' + esc(data.ml_error) + '</strong>. Data pelamar tetap ditampilkan tanpa skor kecocokan.</div>' +
+                '</div>' +
+                '<button class="btn btn-sm btn-outline-warning rounded-pill ms-3" onclick="loadApplicantsTable()">' +
+                '<i class="material-icons fs-6 me-1">refresh</i> Coba Lagi</button>' +
+                '</div>';
+        }
+
+        // Table
+        html += '<div class="table-responsive">' +
+            '<table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">' +
+            '<thead><tr class="fw-bold text-muted bg-light">' +
+            '<th class="ps-4 min-w-250px">Nama & Info Pelamar</th>' +
+            '<th class="min-w-120px">Tanggal Melamar</th>' +
+            '<th class="min-w-100px">Kategori Lokasi</th>' +
+            '<th class="min-w-120px">Rencana Datang</th>' +
+            '<th class="min-w-100px">Status</th>' +
+            (_hasRanking ? '<th class="min-w-150px">Kecocokan</th>' : '') +
+            '<th class="text-end pe-4 min-w-100px">Aksi</th>' +
+            '</tr></thead><tbody>';
+
+        if (!sliced.length) {
+            const colspan = _hasRanking ? 7 : 6;
+            html += '<tr><td colspan="' + colspan + '" class="text-center text-muted py-10">Belum ada pelamar untuk lowongan ini.</td></tr>';
+        } else {
+            sliced.forEach(l => {
+                html += buildRow(l, _hasRanking, _kategorilokasi);
+            });
+        }
+
+        html += '</tbody></table></div>';
+
+        // Pagination controls
+        html += buildPagination(totalPages);
+
+        document.getElementById('applicants-result').innerHTML = html;
+    }
+
+    // ─── Pagination HTML ──────────────────────────────────────────────────────────
+    function buildPagination(totalPages) {
+        if (totalPages <= 1) return '';
+
+        const info = 'Halaman ' + _currentPage + ' dari ' + totalPages +
+            ' &nbsp;·&nbsp; ' + _allLamarans.length + ' pelamar';
+
+        let pages = '';
+
+        // Window: selalu tampil max 5 nomor di sekitar currentPage
+        const delta = 2;
+        const left = Math.max(2, _currentPage - delta);
+        const right = Math.min(totalPages - 1, _currentPage + delta);
+
+        // Tombol halaman 1
+        pages += pageBtn(1);
+
+        // Ellipsis kiri
+        if (left > 2) pages += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+
+        for (let i = left; i <= right; i++) pages += pageBtn(i);
+
+        // Ellipsis kanan
+        if (right < totalPages - 1) pages += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+
+        // Tombol halaman terakhir
+        if (totalPages > 1) pages += pageBtn(totalPages);
+
+        return '<div class="d-flex align-items-center justify-content-between mt-4 flex-wrap gap-2">' +
+            '<span class="text-muted fs-8">' + info + '</span>' +
+            '<ul class="pagination pagination-sm mb-0">' +
+
+            // Prev
+            '<li class="page-item ' + (_currentPage === 1 ? 'disabled' : '') + '">' +
+            '<button class="page-link rounded-start-pill" onclick="goPage(' + (_currentPage - 1) + ')" ' + (_currentPage === 1 ? 'disabled' : '') + '>' +
+            '<i class="material-icons fs-7">chevron_left</i></button></li>' +
+
+            pages +
+
+            // Next
+            '<li class="page-item ' + (_currentPage === totalPages ? 'disabled' : '') + '">' +
+            '<button class="page-link rounded-end-pill" onclick="goPage(' + (_currentPage + 1) + ')" ' + (_currentPage === totalPages ? 'disabled' : '') + '>' +
+            '<i class="material-icons fs-7">chevron_right</i></button></li>' +
+
+            '</ul></div>';
+    }
+
+    function pageBtn(n) {
+        const active = n === _currentPage ? ' active' : '';
+        return '<li class="page-item' + active + '">' +
+            '<button class="page-link" onclick="goPage(' + n + ')">' + n + '</button></li>';
+    }
+
+    function goPage(n) {
+        _currentPage = n;
+        renderPage(); // tanpa argumen, ml_error banner tidak muncul lagi — itu memang benar
+
+        // Scroll ke atas section
+        document.getElementById('applicants-section')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
 
     function buildTable(data) {
         let html = '';
@@ -109,14 +283,10 @@
             html += '<div class="alert alert-warning d-flex align-items-center justify-content-between mb-4">' +
                 '<div class="d-flex align-items-center">' +
                 '<i class="material-icons me-2 fs-5">warning_amber</i>' +
-                '<div>' +
-                'Ranking tidak tersedia: <strong>' + esc(data.ml_error) + '</strong>. ' +
-                'Data pelamar tetap ditampilkan tanpa skor kecocokan.' +
-                '</div>' +
+                '<div>Ranking tidak tersedia: <strong>' + esc(data.ml_error) + '</strong>. Data pelamar tetap ditampilkan tanpa skor kecocokan.</div>' +
                 '</div>' +
                 '<button class="btn btn-sm btn-outline-warning rounded-pill ms-3" onclick="loadApplicantsTable()">' +
-                '<i class="material-icons fs-6 me-1">refresh</i> Coba Lagi' +
-                '</button>' +
+                '<i class="material-icons fs-6 me-1">refresh</i> Coba Lagi</button>' +
                 '</div>';
         }
 
@@ -160,6 +330,7 @@
             '<span class="badge badge-light-primary fw-bold fs-8">' + esc(l.tanggal_datang) + '</span>' :
             '<span class="text-muted fs-9">-</span>';
 
+        // ── Kolom kecocokan ───────────────────────────────────────────────────────
         let kecocokan = '';
         if (hasRanking) {
             if (l.rank) {
@@ -168,18 +339,27 @@
                     yellow: 'warning',
                     red: 'danger'
                 } [l.color] ?? 'secondary';
-                const tags = (l.tags ?? []).slice(0, 2)
+                const tags = (l.tags ?? []).slice(0, 3)
                     .map(t => '<span class="badge badge-light-' + t.type + ' fs-9 me-1">' + esc(t.text) + '</span>')
                     .join('');
+
+                // Simpan data lengkap ke attribute supaya tidak XSS via onclick string
+                const dataAttr = 'data-pelamar=\'' + esc(JSON.stringify(l)) + '\'';
+
                 kecocokan = '<td><div class="d-flex flex-column gap-1">' +
                     '<div class="d-flex align-items-center gap-2">' +
                     '<span class="text-muted fw-semibold fs-9">#' + l.rank + '</span>' +
                     '<span class="badge badge-light-' + cls + ' fw-bold fs-8">' + l.match_percentage + '% · ' + esc(l.label) + '</span>' +
+                    '<button class="btn btn-icon btn-sm btn-light-info ranking-detail-btn" ' + dataAttr + ' title="Lihat Analisis Lengkap" style="width:22px;height:22px;">' +
+                    '<i class="material-icons" style="font-size:13px;">info</i>' +
+                    '</button>' +
                     '</div>' +
-                    '<div class="text-muted fs-9">Sem: ' + Math.round(l.semantic_score * 100) + '%&nbsp;|&nbsp;' +
+                    '<div class="text-muted fs-9">' +
+                    'Profil: ' + Math.round(l.semantic_score * 100) + '%&nbsp;|&nbsp;' +
                     'Skill: ' + Math.round(l.skill_score * 100) + '%&nbsp;|&nbsp;' +
                     'Edu: ' + Math.round(l.education_score * 100) + '%&nbsp;|&nbsp;' +
-                    'Exp: ' + Math.round(l.experience_score * 100) + '%</div>' +
+                    'Exp: ' + Math.round(l.experience_score * 100) + '%' +
+                    '</div>' +
                     (tags ? '<div class="d-flex flex-wrap gap-1">' + tags + '</div>' : '') +
                     '</div></td>';
             } else {
@@ -187,8 +367,10 @@
             }
         }
 
+        // ── Kolom aksi ────────────────────────────────────────────────────────────
         const cvBtn = l.cv_url ?
-            '<a href="' + l.cv_url + '" class="btn btn-sm btn-light-primary fw-bold"><i class="material-icons fs-5">description</i> CV</a>' :
+            '<a href="' + l.cv_url + '" class="btn btn-icon btn-light-primary btn-sm" title="Lihat Profil">' +
+            '<i class="material-icons fs-5">visibility</i></a>' :
             '';
 
         return '<tr>' +
@@ -207,6 +389,95 @@
             '<td class="text-end pe-4">' + cvBtn + '</td>' +
             '</tr>';
     }
+
+    // ─── Modal ranking detail ─────────────────────────────────────────────────────
+
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.ranking-detail-btn');
+        if (!btn) return;
+        const l = JSON.parse(btn.dataset.pelamar);
+        openRankingModal(l);
+    });
+
+    function openRankingModal(l) {
+        const cls = {
+            green: 'success',
+            yellow: 'warning',
+            red: 'danger'
+        } [l.color] ?? 'secondary';
+
+        // Header
+        document.getElementById('rankModalName').textContent = l.namalengkap;
+        document.getElementById('rankModalBadge').innerHTML =
+            '<span class="badge badge-light-' + cls + ' fw-bold fs-7">' +
+            '#' + l.rank + ' &nbsp;·&nbsp; ' + l.match_percentage + '% &nbsp;·&nbsp; ' + esc(l.label) +
+            '</span>';
+
+        // Score cards
+        const scores = [{
+                label: 'Final Score',
+                val: l.final_score,
+                icon: 'leaderboard'
+            },
+            {
+                label: 'Kesesuaian Profil',
+                val: l.semantic_score,
+                icon: 'person_search'
+            },
+            {
+                label: 'Keseuaian Skill',
+                val: l.skill_score,
+                icon: 'build'
+            },
+            {
+                label: 'Kesesuaian Pendidikan',
+                val: l.education_score,
+                icon: 'school'
+            },
+            {
+                label: 'Kesesuaian Pengalaman',
+                val: l.experience_score,
+                icon: 'work_history'
+            },
+        ];
+
+        document.getElementById('rankModalScores').innerHTML = scores.map(s => {
+            const pct = Math.round((s.val ?? 0) * 100);
+            const c = pct >= 60 ? 'success' : pct >= 40 ? 'warning' : 'danger';
+            return '<div class="col">' +
+                '<div class="bg-light rounded-3 p-3 text-center h-100">' +
+                '<i class="material-icons text-' + c + ' mb-1" style="font-size:20px;">' + s.icon + '</i>' +
+                '<div class="fw-bold text-' + c + ' fs-4">' + pct + '%</div>' +
+                '<div class="text-muted fs-9 mt-1">' + s.label + '</div>' +
+                '</div></div>';
+        }).join('');
+
+        // Tags
+        const tagsHtml = (l.tags ?? []).map(t =>
+            '<span class="badge badge-light-' + t.type + ' fs-8 me-1 mb-1">' + esc(t.text) + '</span>'
+        ).join('');
+        document.getElementById('rankModalTags').innerHTML = tagsHtml || '<span class="text-muted fs-8">—</span>';
+
+        // Reasons
+        document.getElementById('rankModalReasons').innerHTML = (l.reasons ?? []).map((r, i) => {
+            // Deteksi icon per konteks
+            const icon = r.toLowerCase().includes('skill') ? 'build' :
+                r.toLowerCase().includes('pendidikan') ? 'school' :
+                r.toLowerCase().includes('pengalaman') ? 'work_history' :
+                r.toLowerCase().includes('catatan') ? 'info' :
+                r.toLowerCase().includes('loker mensya') ? 'warning_amber' :
+                'chevron_right';
+            const isWarning = r.toLowerCase().includes('catatan') || r.toLowerCase().includes('verifikasi');
+            return '<div class="d-flex gap-3 p-3 rounded-3 mb-2 ' + (isWarning ? 'bg-warning bg-opacity-10' : 'bg-light') + '">' +
+                '<i class="material-icons text-' + (isWarning ? 'warning' : 'muted') + ' flex-shrink-0" style="font-size:18px;margin-top:1px;">' + icon + '</i>' +
+                '<span class="text-gray-700 fs-7">' + esc(r) + '</span>' +
+                '</div>';
+        }).join('') || '<span class="text-muted fs-8">Tidak ada detail analisis.</span>';
+
+        new bootstrap.Modal(document.getElementById('rankingDetailModal')).show();
+    }
+
+    // ─── Utils ────────────────────────────────────────────────────────────────────
 
     function showAppEl(id) {
         document.getElementById(id)?.classList.remove('d-none');

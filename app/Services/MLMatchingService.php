@@ -75,31 +75,31 @@ class  MLMatchingService
             'id'            => $pelamar->id,
             'namalengkap'   => $pelamar->namalengkap,
             'deskripsidiri' => $pelamar->deskripsidiri,
-            'tanggallahir' => $pelamar->tanggallahir,
-            'jeniskelamin' => $pelamar->jeniskelamin,
+            'tanggallahir'  => $pelamar->tanggallahir,
+            'jeniskelamin'  => $pelamar->jeniskelamin,
 
-            // Skills: hanya namaskill + keterangan yang dibutuhkan ML
             'skills' => $pelamar->skills->map(fn($s) => [
                 'namaskill'  => $s->namaskill,
                 'keterangan' => $s->keterangan,
             ])->toArray(),
 
-            // Pendidikan: kategori + jurusan + tahun
             'pendidikans' => $pelamar->pendidikans->map(fn($p) => [
-                'kategori'    => $p->kategori,
-                'jurusan'     => $p->jurusan,
-                'tahunawal'   => (int) $p->tahunawal,
+                'kategori'     => $p->kategori,
+                'jurusan'      => $p->jurusan,
+                'tahunawal'    => (int) $p->tahunawal,
                 'tahunselesai' => $p->tahunselesai ? (int) $p->tahunselesai : null,
             ])->toArray(),
 
-            // Pengalaman: posisi + tahun + aktif
-            // Tidak ada field deskripsi di DB → kirim apa yang ada
             'pengalamans' => $pelamar->pengalamans->map(fn($e) => [
-                'posisi'      => $e->posisi,
-                'tahunawal'   => (int) $e->tahunawal,
+                'posisi'       => $e->posisi,
+                'bulanawal'    => (int) $e->bulanawal,
+                'tahunawal'    => (int) $e->tahunawal,
+                'bulanselesai' => (int) $e->bulanselesai,
                 'tahunselesai' => $e->tahunselesai ? (int) $e->tahunselesai : null,
-                'aktif'       => (int) $e->aktif,
+                'aktif'        => (int) $e->aktif,
             ])->toArray(),
+
+            'total_pengalaman_bulan' => $this->hitungTotalPengalaman($pelamar->pengalamans),
         ];
     }
 
@@ -111,24 +111,40 @@ class  MLMatchingService
             'deskripsi'      => $lowongan->deskripsi,
             'kategorilokasi' => $lowongan->kategorilokasi,
 
-            'gaji_awal' => $lowongan->gaji_awal
-                ? (float) $lowongan->gaji_awal
+            'gaji_awal'  => $lowongan->gaji_awal  ? (float) $lowongan->gaji_awal  : null,
+            'gaji_akhir' => $lowongan->gaji_akhir ? (float) $lowongan->gaji_akhir : null,
+
+            'minimal_pendidikan' => $lowongan->minimal_pendidikan
+                ? [
+                    'kode' => (int) $lowongan->minimal_pendidikan,
+                    'nama' => $this->labelPendidikan($lowongan->minimal_pendidikan),
+                ]
                 : null,
 
-            'gaji_akhir' => $lowongan->gaji_akhir
-                ? (float) $lowongan->gaji_akhir
-                : null,
+            'minimal_pengalaman_bulan' => (int) $lowongan->minimal_pengalaman_bulan,
+            'preferensi_gender'        => $lowongan->preferensi_gender,
+            'usia_min'                 => (int) $lowongan->usia_min,
+            'usia_max'                 => (int) $lowongan->usia_max,
 
             'kategori' => [
                 'id'   => $lowongan->kategori->id,
                 'nama' => $lowongan->kategori->nama,
             ],
 
-            'perusahaan_nama' =>
-            $lowongan->register->perusahaan->nama ?? null,
+            // hasMany ke LowonganSkill → perlu ->skill untuk ke MasterSkill
+            'skills' => $lowongan->skills->map(fn($ls) => [
+                'id'   => $ls->skill->id,
+                'nama' => $ls->skill->namaskill,
+            ])->toArray(),
 
-            'perusahaan_logo' =>
-            $lowongan->register->perusahaan->logo ?? null,
+            // hasMany ke LowonganJurusan → perlu ->jurusan untuk ke MasterJurusan
+            'jurusans' => $lowongan->jurusans->map(fn($lj) => [
+                'id'   => $lj->jurusan->id,
+                'nama' => $lj->jurusan->namajurusan,
+            ])->toArray(),
+
+            'perusahaan_nama' => $lowongan->register->perusahaan->nama ?? null,
+            'perusahaan_logo' => $lowongan->register->perusahaan->logo ?? null,
         ];
     }
 
@@ -139,6 +155,46 @@ class  MLMatchingService
             ->toArray();
     }
 
+    private function hitungTotalPengalaman($pengalamans): int
+    {
+        $now = \Carbon\Carbon::now();
+        $total = 0;
+
+        foreach ($pengalamans as $e) {
+            $start = \Carbon\Carbon::create(
+                $e->tahunawal,
+                $e->bulanawal ?: 1,
+                1
+            );
+
+            $end = $e->aktif
+                ? $now
+                : \Carbon\Carbon::create(
+                    $e->tahunselesai ?? $now->year,
+                    $e->bulanselesai ?: 1,
+                    1
+                );
+
+            $total += max(0, $start->diffInMonths($end));
+        }
+
+        return $total;
+    }
+
+    private function labelPendidikan(int $kode): string
+    {
+        return [
+            1 => 'SD',
+            2 => 'SMP',
+            3 => 'SMA/SMK',
+            4 => 'D1',
+            5 => 'D2',
+            6 => 'D3',
+            7 => 'D4/S1',
+            8 => 'S2',
+            9 => 'S3',
+        ][$kode] ?? '-';
+    }
     public function rankApplicants($loker): array
     {
         try {

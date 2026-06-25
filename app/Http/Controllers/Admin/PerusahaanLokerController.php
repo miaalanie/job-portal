@@ -397,7 +397,7 @@ class PerusahaanLokerController extends Controller
             return redirect()->back()->with('error', 'Gagal memuat detail pelamar: ' . $e->getMessage());
         }
     }
-    
+
     public function loadApplicantsRanking($id): JsonResponse
     {
         try {
@@ -406,6 +406,8 @@ class PerusahaanLokerController extends Controller
             $loker = Lowongan::with([
                 'register.perusahaan',
                 'kategori',
+                'skills.skill',      // ← nested sampai MasterSkill
+                'jurusans.jurusan',
                 'lamarans.pelamar',
                 'lamarans.pelamar.skills',
                 'lamarans.pelamar.pendidikans',
@@ -444,7 +446,7 @@ class PerusahaanLokerController extends Controller
                             : null,
                         'statusditerima'      => $lamaran->statusditerima,
                         'cv_url'              => $pelamar
-                            ? route('admin.perusahaan.pelamar.download-cv', encrypt($pelamar->id))
+                            ? route('admin.perusahaan.pelamar.show', encrypt($pelamar->id))
                             : null,
                         // Ranking — null kalau ML gagal
                         'rank'             => $rankData['rank'] ?? null,
@@ -456,6 +458,8 @@ class PerusahaanLokerController extends Controller
                         'education_score'  => $rankData['education_score'] ?? null,
                         'experience_score' => $rankData['experience_score'] ?? null,
                         'tags'             => $rankData['tags'] ?? [],
+                        'reasons'          => $rankData['reasons'] ?? [],
+                        'final_score'      => $rankData['final_score'] ?? null,
                     ];
                 })
                 ->sortBy(fn($l) => $l['rank'] ?? 9999)

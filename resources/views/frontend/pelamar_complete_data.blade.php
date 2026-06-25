@@ -7,12 +7,33 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/pnotify/3.2.1/pnotify.brighttheme.css" rel="stylesheet" type="text/css" />
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-    .is-invalid-custom { border: 2px solid #dc3545 !important; }
-    .fs-9 { font-size: 0.75rem; }
-    .fs-10 { font-size: 0.65rem; }
-    .ls-1 { letter-spacing: 0.5px; }
-    .education-item, .experience-item, .skill-item { border-left: 4px solid var(--primary-color); }
-    .btn-white { background-color: white; color: var(--primary-color); }
+    .is-invalid-custom {
+        border: 2px solid #dc3545 !important;
+    }
+
+    .fs-9 {
+        font-size: 0.75rem;
+    }
+
+    .fs-10 {
+        font-size: 0.65rem;
+    }
+
+    .ls-1 {
+        letter-spacing: 0.5px;
+    }
+
+    .education-item,
+    .experience-item,
+    .skill-item {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .btn-white {
+        background-color: white;
+        color: var(--primary-color);
+    }
+
     /* Select2 Restyling for bg-light */
     .select2-container .select2-selection--single {
         background-color: #f8f9fa !important;
@@ -21,6 +42,7 @@
         height: 42px !important;
         padding-top: 6px;
     }
+
     .select2-container .select2-selection--single .select2-selection__arrow {
         top: 8px !important;
         right: 8px !important;
@@ -57,7 +79,9 @@
                                 </div>
 
                                 <script type="application/json" id="jobs-data">
-                                    {!! json_encode($pelamar) !!}
+                                    {
+                                        !!json_encode($pelamar) !!
+                                    }
                                 </script>
 
                                 <script>
@@ -72,10 +96,10 @@
                                     <div class="position-relative">
                                         <div class="rounded-4 overflow-hidden shadow-sm bg-light d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
                                             @if($pelamar && $pelamar->foto)
-                                                <img src="{{ asset('storage/'.$pelamar->foto) }}" id="preview_foto" class="w-100 h-100 object-fit-cover">
+                                            <img src="{{ asset('storage/'.$pelamar->foto) }}" id="preview_foto" class="w-100 h-100 object-fit-cover">
                                             @else
-                                                <i class="material-icons opacity-25" style="font-size: 4rem;">account_circle</i>
-                                                <img id="preview_foto" class="w-100 h-100 object-fit-cover d-none">
+                                            <i class="material-icons opacity-25" style="font-size: 4rem;">account_circle</i>
+                                            <img id="preview_foto" class="w-100 h-100 object-fit-cover d-none">
                                             @endif
                                         </div>
                                     </div>
@@ -131,10 +155,10 @@
                                 </div>
 
                                 @php
-                                    $currentKelurahan = $pelamar ? $pelamar->kelurahan : null;
-                                    $currentKecamatan = $currentKelurahan ? $currentKelurahan->kecamatan : null;
-                                    $currentKota = $currentKecamatan ? $currentKecamatan->kota : null;
-                                    $currentProvinsi = $currentKota ? $currentKota->provinsi : null;
+                                $currentKelurahan = $pelamar ? $pelamar->kelurahan : null;
+                                $currentKecamatan = $currentKelurahan ? $currentKelurahan->kecamatan : null;
+                                $currentKota = $currentKecamatan ? $currentKecamatan->kota : null;
+                                $currentProvinsi = $currentKota ? $currentKota->provinsi : null;
                                 @endphp
 
                                 <div class="col-md-6">
@@ -142,7 +166,7 @@
                                     <select id="provinsi_id" class="form-select select2-location bg-light border-0 py-2 rounded-3" required>
                                         <option value="">Pilih Provinsi</option>
                                         @foreach($provinsis as $p)
-                                            <option value="{{ $p->id }}" {{ ($currentProvinsi->id ?? '') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
+                                        <option value="{{ $p->id }}" {{ ($currentProvinsi->id ?? '') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -152,7 +176,7 @@
                                     <select id="kota_id" class="form-select select2-location bg-light border-0 py-2 rounded-3" required {{ !$currentKota ? 'disabled' : '' }}>
                                         <option value="">Pilih Kota</option>
                                         @if($currentKota)
-                                            <option value="{{ $currentKota->id }}" selected>{{ $currentKota->nama }}</option>
+                                        <option value="{{ $currentKota->id }}" selected>{{ $currentKota->nama }}</option>
                                         @endif
                                     </select>
                                 </div>
@@ -162,7 +186,7 @@
                                     <select id="kecamatan_id" class="form-select select2-location bg-light border-0 py-2 rounded-3" required {{ !$currentKecamatan ? 'disabled' : '' }}>
                                         <option value="">Pilih Kecamatan</option>
                                         @if($currentKecamatan)
-                                            <option value="{{ $currentKecamatan->id }}" selected>{{ $currentKecamatan->nama }}</option>
+                                        <option value="{{ $currentKecamatan->id }}" selected>{{ $currentKecamatan->nama }}</option>
                                         @endif
                                     </select>
                                 </div>
@@ -172,7 +196,7 @@
                                     <select name="idkelurahan" id="kelurahan_id" class="form-select select2-location bg-light border-0 py-2 rounded-3" required {{ !$currentKelurahan ? 'disabled' : '' }}>
                                         <option value="">Pilih Kelurahan</option>
                                         @if($currentKelurahan)
-                                            <option value="{{ $currentKelurahan->id }}" selected>{{ $currentKelurahan->nama }}</option>
+                                        <option value="{{ $currentKelurahan->id }}" selected>{{ $currentKelurahan->nama }}</option>
                                         @endif
                                     </select>
                                 </div>
@@ -196,72 +220,74 @@
                                     <hr class="mt-0 mb-4 opacity-10">
                                     <div id="education_container" class="vstack gap-3">
                                         @forelse($pelamar->pendidikans ?? [] as $edu)
-                                            <div class="education-item bg-light p-3 rounded-3 position-relative">
-                                                <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
-                                                <div class="row g-3">
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tingkat <span class="text-danger">*</span></label>
-                                                        <select name="edu_kategori[]" class="form-select border-0 py-2" required>
-                                                            <option value="SD" {{ $edu->kategori == 'SD' ? 'selected' : '' }}>SD</option>
-                                                            <option value="SMP" {{ $edu->kategori == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                                            <option value="SMA/SMK" {{ $edu->kategori == 'SMA/SMK' ? 'selected' : '' }}>SMA/SMK</option>
-                                                            <option value="D3" {{ $edu->kategori == 'D3' ? 'selected' : '' }}>D3</option>
-                                                            <option value="D4/S1" {{ $edu->kategori == 'D4/S1' ? 'selected' : '' }}>D4/S1</option>
-                                                            <option value="S2" {{ $edu->kategori == 'S2' ? 'selected' : '' }}>S2</option>
-                                                            <option value="S3" {{ $edu->kategori == 'S3' ? 'selected' : '' }}>S3</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-8">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Nama Institusi <span class="text-danger">*</span></label>
-                                                        <input type="text" name="edu_nama[]" class="form-control border-0 py-2" value="{{ $edu->namasekolah }}" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Jurusan</label>
-                                                        <input type="text" name="edu_jurusan[]" class="form-control border-0 py-2" value="{{ $edu->jurusan }}">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
-                                                        <input type="number" name="edu_awal[]" class="form-control border-0 py-2" value="{{ $edu->tahunawal }}" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Lulus <span class="text-danger">*</span></label>
-                                                        <input type="number" name="edu_akhir[]" class="form-control border-0 py-2" value="{{ $edu->tahunselesai }}" required>
-                                                    </div>
+                                        <div class="education-item bg-light p-3 rounded-3 position-relative">
+                                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tingkat <span class="text-danger">*</span></label>
+                                                    <select name="edu_kategori[]" class="form-select border-0 py-2" required>
+                                                        <option value="SD" {{ $edu->kategori == 'SD' ? 'selected' : '' }}>SD</option>
+                                                        <option value="SMP" {{ $edu->kategori == 'SMP' ? 'selected' : '' }}>SMP</option>
+                                                        <option value="SMA/SMK" {{ $edu->kategori == 'SMA/SMK' ? 'selected' : '' }}>SMA/SMK</option>
+                                                        <option value="D3" {{ $edu->kategori == 'D3' ? 'selected' : '' }}>D3</option>
+                                                        <option value="D4/S1" {{ $edu->kategori == 'D4/S1' ? 'selected' : '' }}>D4/S1</option>
+                                                        <option value="S2" {{ $edu->kategori == 'S2' ? 'selected' : '' }}>S2</option>
+                                                        <option value="S3" {{ $edu->kategori == 'S3' ? 'selected' : '' }}>S3</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Nama Institusi <span class="text-danger">*</span></label>
+                                                    <input type="text" name="edu_nama[]" class="form-control border-0 py-2" value="{{ $edu->namasekolah }}" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Jurusan</label>
+                                                    <input type="text" name="edu_jurusan[]" class="form-control border-0 py-2" value="{{ $edu->jurusan }}">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
+                                                    <input type="number" name="edu_awal[]" class="form-control border-0 py-2" value="{{ $edu->tahunawal }}" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Lulus <span class="text-danger">*</span></label>
+                                                    <input type="number" name="edu_akhir[]" class="form-control border-0 py-2" value="{{ $edu->tahunselesai }}" required>
                                                 </div>
                                             </div>
+                                        </div>
                                         @empty
-                                            <div class="education-item bg-light p-3 rounded-3 position-relative">
-                                                <div class="row g-3">
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tingkat <span class="text-danger">*</span></label>
-                                                        <select name="edu_kategori[]" class="form-select border-0 py-2" required>
-                                                            <option value="SD">SD</option>
-                                                            <option value="SMP">SMP</option>
-                                                            <option value="SMA/SMK">SMA/SMK</option>
-                                                            <option value="D3">D3</option>
-                                                            <option value="D4/S1">D4/S1</option>
-                                                            <option value="S2">S2</option>
-                                                            <option value="S3">S3</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-8">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Nama Institusi <span class="text-danger">*</span></label>
-                                                        <input type="text" name="edu_nama[]" class="form-control border-0 py-2" placeholder="Contoh: Universitas Indonesia" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Jurusan</label>
-                                                        <input type="text" name="edu_jurusan[]" class="form-control border-0 py-2" placeholder="Contoh: Teknik Informatika">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
-                                                        <input type="number" name="edu_awal[]" class="form-control border-0 py-2" placeholder="YYYY" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Lulus <span class="text-danger">*</span></label>
-                                                        <input type="number" name="edu_akhir[]" class="form-control border-0 py-2" placeholder="YYYY" required>
-                                                    </div>
+                                        <div class="education-item bg-light p-3 rounded-3 position-relative">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tingkat <span class="text-danger">*</span></label>
+                                                    <select name="edu_kategori[]" class="form-select border-0 py-2" required>
+                                                        <option value="SD">SD</option>
+                                                        <option value="SMP">SMP</option>
+                                                        <option value="SMA/SMK">SMA/SMK</option>
+                                                        <option value="D1">D1</option>
+                                                        <option value="D2">D2</option>
+                                                        <option value="D3">D3</option>
+                                                        <option value="D4/S1">D4/S1</option>
+                                                        <option value="S2">S2</option>
+                                                        <option value="S3">S3</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Nama Institusi <span class="text-danger">*</span></label>
+                                                    <input type="text" name="edu_nama[]" class="form-control border-0 py-2" placeholder="Contoh: Universitas Indonesia" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Jurusan</label>
+                                                    <input type="text" name="edu_jurusan[]" class="form-control border-0 py-2" placeholder="Contoh: Teknik Informatika">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
+                                                    <input type="number" name="edu_awal[]" class="form-control border-0 py-2" placeholder="YYYY" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Lulus <span class="text-danger">*</span></label>
+                                                    <input type="number" name="edu_akhir[]" class="form-control border-0 py-2" placeholder="YYYY" required>
                                                 </div>
                                             </div>
+                                        </div>
                                         @endforelse
                                     </div>
                                 </div>
@@ -280,43 +306,43 @@
                                     <hr class="mt-0 mb-4 opacity-10">
                                     <div id="skill_container" class="vstack gap-3">
                                         @forelse($pelamar->skills ?? [] as $skill)
-                                            <div class="skill-item bg-light p-3 rounded-3 position-relative">
-                                                <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
-                                                <div class="row g-3">
-                                                    <div class="col-md-7">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Nama Keahlian <span class="text-danger">*</span></label>
-                                                        <input type="text" name="skill_nama[]" class="form-control border-0 py-2" value="{{ $skill->namaskill }}" required>
-                                                    </div>
-                                                    <div class="col-md-5">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tingkat Penguasaan <span class="text-danger">*</span></label>
-                                                        <select name="skill_ket[]" class="form-select border-0 py-2" required>
-                                                            <option value="Kurang" {{ $skill->keterangan == 'Kurang' ? 'selected' : '' }}>Kurang</option>
-                                                            <option value="Cukup" {{ $skill->keterangan == 'Cukup' ? 'selected' : '' }}>Cukup</option>
-                                                            <option value="Baik" {{ $skill->keterangan == 'Baik' ? 'selected' : '' }}>Baik</option>
-                                                            <option value="Sangat Baik" {{ $skill->keterangan == 'Sangat Baik' ? 'selected' : '' }}>Sangat Baik</option>
-                                                        </select>
-                                                    </div>
+                                        <div class="skill-item bg-light p-3 rounded-3 position-relative">
+                                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
+                                            <div class="row g-3">
+                                                <div class="col-md-7">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Nama Keahlian <span class="text-danger">*</span></label>
+                                                    <input type="text" name="skill_nama[]" class="form-control border-0 py-2" value="{{ $skill->namaskill }}" required>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tingkat Penguasaan <span class="text-danger">*</span></label>
+                                                    <select name="skill_ket[]" class="form-select border-0 py-2" required>
+                                                        <option value="Kurang" {{ $skill->keterangan == 'Kurang' ? 'selected' : '' }}>Kurang</option>
+                                                        <option value="Cukup" {{ $skill->keterangan == 'Cukup' ? 'selected' : '' }}>Cukup</option>
+                                                        <option value="Baik" {{ $skill->keterangan == 'Baik' ? 'selected' : '' }}>Baik</option>
+                                                        <option value="Sangat Baik" {{ $skill->keterangan == 'Sangat Baik' ? 'selected' : '' }}>Sangat Baik</option>
+                                                    </select>
                                                 </div>
                                             </div>
+                                        </div>
                                         @empty
-                                            <div class="skill-item bg-light p-3 rounded-3 position-relative">
-                                                <div class="row g-3">
-                                                    <div class="col-md-7">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Nama Keahlian <span class="text-danger">*</span></label>
-                                                        <input type="text" name="skill_nama[]" class="form-control border-0 py-2" placeholder="Contoh: Microsoft Excel / Programming" required>
-                                                    </div>
-                                                    <div class="col-md-5">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tingkat Penguasaan <span class="text-danger">*</span></label>
-                                                        <select name="skill_ket[]" class="form-select border-0 py-2" required>
-                                                            <option value="">Pilih Tingkat</option>
-                                                            <option value="Kurang">Kurang</option>
-                                                            <option value="Cukup">Cukup</option>
-                                                            <option value="Baik">Baik</option>
-                                                            <option value="Sangat Baik">Sangat Baik</option>
-                                                        </select>
-                                                    </div>
+                                        <div class="skill-item bg-light p-3 rounded-3 position-relative">
+                                            <div class="row g-3">
+                                                <div class="col-md-7">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Nama Keahlian <span class="text-danger">*</span></label>
+                                                    <input type="text" name="skill_nama[]" class="form-control border-0 py-2" placeholder="Contoh: Microsoft Excel / Programming" required>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tingkat Penguasaan <span class="text-danger">*</span></label>
+                                                    <select name="skill_ket[]" class="form-select border-0 py-2" required>
+                                                        <option value="">Pilih Tingkat</option>
+                                                        <option value="Kurang">Kurang</option>
+                                                        <option value="Cukup">Cukup</option>
+                                                        <option value="Baik">Baik</option>
+                                                        <option value="Sangat Baik">Sangat Baik</option>
+                                                    </select>
                                                 </div>
                                             </div>
+                                        </div>
                                         @endforelse
                                     </div>
                                 </div>
@@ -343,60 +369,122 @@
                                     <hr class="mt-0 mb-4 opacity-10">
                                     <div id="experience_container" class="vstack gap-3" style="{{ ($pelamar && $pelamar->pengalamans->count() == 0) ? 'display:none' : '' }}">
                                         @forelse($pelamar->pengalamans ?? [] as $index => $exp)
-                                            <div class="experience-item bg-light p-3 rounded-3 position-relative">
-                                                <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
-                                                <div class="row g-3">
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Nama Perusahaan <span class="text-danger">*</span></label>
-                                                        <input type="text" name="exp_nama[]" class="form-control border-0 py-2" value="{{ $exp->namaperusahaan }}" required>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Posisi/Jabatan <span class="text-danger">*</span></label>
-                                                        <input type="text" name="exp_posisi[]" class="form-control border-0 py-2" value="{{ $exp->posisi }}" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
-                                                        <input type="number" name="exp_awal[]" class="form-control border-0 py-2" value="{{ $exp->tahunawal }}" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Selesai</label>
-                                                        <input type="number" name="exp_akhir[]" class="form-control border-0 py-2" value="{{ $exp->tahunselesai }}">
-                                                    </div>
-                                                    <div class="col-md-4 d-flex align-items-end pb-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="exp_aktif[]" value="1" id="exp_aktif_{{ $index }}" {{ $exp->aktif ? 'checked' : '' }}>
-                                                            <label class="form-check-label small text-muted" for="exp_aktif_{{ $index }}">Masih Bekerja</label>
-                                                        </div>
+                                        <div class="experience-item bg-light p-3 rounded-3 position-relative">
+                                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Nama Perusahaan <span class="text-danger">*</span></label>
+                                                    <input type="text" name="exp_nama[]" class="form-control border-0 py-2" value="{{ $exp->namaperusahaan }}" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Posisi/Jabatan <span class="text-danger">*</span></label>
+                                                    <input type="text" name="exp_posisi[]" class="form-control border-0 py-2" value="{{ $exp->posisi }}" required>
+                                                </div>
+
+                                                {{-- Tanggal Masuk --}}
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Bulan Masuk <span class="text-danger">*</span></label>
+                                                    <select name="exp_bulan_awal[]" class="form-select border-0 py-2" required>
+                                                        @foreach(['Januari'=>1,'Februari'=>2,'Maret'=>3,'April'=>4,'Mei'=>5,'Juni'=>6,'Juli'=>7,'Agustus'=>8,'September'=>9,'Oktober'=>10,'November'=>11,'Desember'=>12] as $nama => $num)
+                                                        <option value="{{ $num }}" {{ $exp->bulanawal == $num ? 'selected' : '' }}>{{ $nama }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
+                                                    <input type="number" name="exp_awal[]" class="form-control border-0 py-2" value="{{ $exp->tahunawal }}" placeholder="YYYY" required>
+                                                </div>
+
+                                                {{-- Tanggal Selesai --}}
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Bulan Selesai</label>
+                                                    <select name="exp_bulan_akhir[]" class="form-select border-0 py-2"
+                                                        style="{{ $exp->aktif ? 'pointer-events:none;opacity:0.5' : '' }}">
+                                                        <option value="">— Pilih —</option>
+                                                        @foreach(['Januari'=>1,'Februari'=>2,'Maret'=>3,'April'=>4,'Mei'=>5,'Juni'=>6,'Juli'=>7,'Agustus'=>8,'September'=>9,'Oktober'=>10,'November'=>11,'Desember'=>12] as $nama => $num)
+                                                        {{-- Kalau aktif, select bulan sekarang. Kalau tidak, pakai data tersimpan --}}
+                                                        <option value="{{ $num }}" {{ ($exp->aktif ? (int)date('n') : $exp->bulanselesai) == $num ? 'selected' : '' }}>{{ $nama }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Selesai</label>
+                                                    <input type="number" name="exp_akhir[]" class="form-control border-0 py-2"
+                                                        value="{{ $exp->aktif ? date('Y') : $exp->tahunselesai }}" placeholder="YYYY"
+                                                        style="{{ $exp->aktif ? 'pointer-events:none;opacity:0.5' : '' }}">
+                                                </div>
+                                                <div class="col-md-4 d-flex align-items-end pb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="exp_aktif[]" value="1" id="exp_aktif_{{ $index }}" {{ $exp->aktif ? 'checked' : '' }}>
+                                                        <label class="form-check-label small text-muted" for="exp_aktif_{{ $index }}">Masih Bekerja</label>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
                                         @empty
-                                            <div class="experience-item bg-light p-3 rounded-3 position-relative">
-                                                <div class="row g-3">
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Nama Perusahaan <span class="text-danger">*</span></label>
-                                                        <input type="text" name="exp_nama[]" class="form-control border-0 py-2" placeholder="Contoh: PT Maju Jaya" required>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Posisi/Jabatan <span class="text-danger">*</span></label>
-                                                        <input type="text" name="exp_posisi[]" class="form-control border-0 py-2" placeholder="Contoh: Staff Admin" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
-                                                        <input type="number" name="exp_awal[]" class="form-control border-0 py-2" placeholder="YYYY" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Selesai</label>
-                                                        <input type="number" name="exp_akhir[]" class="form-control border-0 py-2" placeholder="YYYY (Kosongkan jika aktif)">
-                                                    </div>
-                                                    <div class="col-md-4 d-flex align-items-end pb-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="exp_aktif[]" value="1" id="exp_aktif_0">
-                                                            <label class="form-check-label small text-muted" for="exp_aktif_0">Masih Bekerja</label>
-                                                        </div>
+                                        <div class="experience-item bg-light p-3 rounded-3 position-relative">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Nama Perusahaan <span class="text-danger">*</span></label>
+                                                    <input type="text" name="exp_nama[]" class="form-control border-0 py-2" placeholder="Contoh: PT Maju Jaya" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Posisi/Jabatan <span class="text-danger">*</span></label>
+                                                    <input type="text" name="exp_posisi[]" class="form-control border-0 py-2" placeholder="Contoh: Staff Admin" required>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Bulan Masuk <span class="text-danger">*</span></label>
+                                                    <select name="exp_bulan_awal[]" class="form-select border-0 py-2" required>
+                                                        <option value="">— Pilih —</option>
+                                                        <option value="1">Januari</option>
+                                                        <option value="2">Februari</option>
+                                                        <option value="3">Maret</option>
+                                                        <option value="4">April</option>
+                                                        <option value="5">Mei</option>
+                                                        <option value="6">Juni</option>
+                                                        <option value="7">Juli</option>
+                                                        <option value="8">Agustus</option>
+                                                        <option value="9">September</option>
+                                                        <option value="10">Oktober</option>
+                                                        <option value="11">November</option>
+                                                        <option value="12">Desember</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
+                                                    <input type="number" name="exp_awal[]" class="form-control border-0 py-2" placeholder="YYYY" required>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Bulan Selesai</label>
+                                                    <select name="exp_bulan_akhir[]" class="form-select border-0 py-2">
+                                                        <option value="">— Pilih —</option>
+                                                        <option value="1">Januari</option>
+                                                        <option value="2">Februari</option>
+                                                        <option value="3">Maret</option>
+                                                        <option value="4">April</option>
+                                                        <option value="5">Mei</option>
+                                                        <option value="6">Juni</option>
+                                                        <option value="7">Juli</option>
+                                                        <option value="8">Agustus</option>
+                                                        <option value="9">September</option>
+                                                        <option value="10">Oktober</option>
+                                                        <option value="11">November</option>
+                                                        <option value="12">Desember</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Selesai</label>
+                                                    <input type="number" name="exp_akhir[]" class="form-control border-0 py-2" placeholder="YYYY">
+                                                </div>
+                                                <div class="col-md-4 d-flex align-items-end pb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="exp_aktif[]" value="1" id="exp_aktif_0">
+                                                        <label class="form-check-label small text-muted" for="exp_aktif_0">Masih Bekerja</label>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
                                         @endforelse
                                     </div>
                                 </div>
@@ -415,22 +503,22 @@
                                     <hr class="mt-0 mb-4 opacity-10">
                                     <div id="document_container" class="row g-3">
                                         @php
-                                            $ktpDoc = $pelamar ? $pelamar->dokumens->where('namadokumen', 'KTP')->first() : null;
-                                            $kuningDoc = $pelamar ? $pelamar->dokumens->where('namadokumen', 'Kartu Kuning (AK-1)')->first() : null;
-                                            $additionalDocs = $pelamar ? $pelamar->dokumens->whereNotIn('namadokumen', ['KTP', 'Kartu Kuning (AK-1)']) : collect();
+                                        $ktpDoc = $pelamar ? $pelamar->dokumens->where('namadokumen', 'KTP')->first() : null;
+                                        $kuningDoc = $pelamar ? $pelamar->dokumens->where('namadokumen', 'Kartu Kuning (AK-1)')->first() : null;
+                                        $additionalDocs = $pelamar ? $pelamar->dokumens->whereNotIn('namadokumen', ['KTP', 'Kartu Kuning (AK-1)']) : collect();
                                         @endphp
-                                        
+
                                         <!-- Mandatory KTP -->
                                         <div class="col-md-6">
                                             <div class="bg-light p-3 rounded-3 h-100">
                                                 <label class="form-label fs-9 fw-bold text-uppercase">Kartu Tanda Penduduk (KTP) {{ !$ktpDoc ? '*' : '' }}</label>
                                                 <input type="file" name="doc_file_ktp" class="form-control border-0 py-2" accept=".pdf,.jpg,.jpeg,.png" {{ !$ktpDoc ? 'required' : '' }}>
                                                 @if($ktpDoc)
-                                                    <div class="mt-2 text-primary small d-flex align-items-center">
-                                                        <i class="material-icons fs-6 me-1">verified</i> <a href="{{ asset('storage/'.$ktpDoc->filedokumen) }}" target="_blank" class="text-decoration-none">Lihat KTP Terunggah</a>
-                                                    </div>
+                                                <div class="mt-2 text-primary small d-flex align-items-center">
+                                                    <i class="material-icons fs-6 me-1">verified</i> <a href="{{ asset('storage/'.$ktpDoc->filedokumen) }}" target="_blank" class="text-decoration-none">Lihat KTP Terunggah</a>
+                                                </div>
                                                 @else
-                                                    <div class="fs-10 text-muted mt-1">Format: PDF/JPG (Maks. 2MB)</div>
+                                                <div class="fs-10 text-muted mt-1">Format: PDF/JPG (Maks. 2MB)</div>
                                                 @endif
                                             </div>
                                         </div>
@@ -440,30 +528,30 @@
                                                 <label class="form-label fs-9 fw-bold text-uppercase">Kartu Kuning (AK-1) {{ !$kuningDoc ? '*' : '' }}</label>
                                                 <input type="file" name="doc_file_kuning" class="form-control border-0 py-2" accept=".pdf,.jpg,.jpeg,.png" {{ !$kuningDoc ? 'required' : '' }}>
                                                 @if($kuningDoc)
-                                                    <div class="mt-2 text-primary small d-flex align-items-center">
-                                                        <i class="material-icons fs-6 me-1">verified</i> <a href="{{ asset('storage/'.$kuningDoc->filedokumen) }}" target="_blank" class="text-decoration-none">Lihat Kartu Kuning</a>
-                                                    </div>
+                                                <div class="mt-2 text-primary small d-flex align-items-center">
+                                                    <i class="material-icons fs-6 me-1">verified</i> <a href="{{ asset('storage/'.$kuningDoc->filedokumen) }}" target="_blank" class="text-decoration-none">Lihat Kartu Kuning</a>
+                                                </div>
                                                 @else
-                                                    <div class="fs-10 text-muted mt-1">Format: PDF/JPG (Maks. 2MB)</div>
+                                                <div class="fs-10 text-muted mt-1">Format: PDF/JPG (Maks. 2MB)</div>
                                                 @endif
                                             </div>
                                         </div>
 
                                         @foreach($additionalDocs as $doc)
-                                            <div class="col-md-6 additional-doc-item">
-                                                <div class="bg-light p-3 rounded-3 h-100 position-relative">
-                                                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.parentElement.remove()"></button>
-                                                    <label class="form-label fs-9 fw-bold text-uppercase">Dokumen: {{ $doc->namadokumen }}</label>
-                                                    <div class="mb-2">
-                                                        <a href="{{ asset('storage/'.$doc->filedokumen) }}" target="_blank" class="btn btn-sm btn-white border px-3 rounded-pill text-primary-theme fs-9 fw-bold">
-                                                            <i class="material-icons fs-6 align-middle me-1">visibility</i> Lihat File
-                                                        </a>
-                                                    </div>
-                                                    <!-- Keep existing data for update if needed, but the controller clears & saves new anyway -->
-                                                    <input type="hidden" name="existing_doc_name[]" value="{{ $doc->namadokumen }}">
-                                                    <input type="hidden" name="existing_doc_file[]" value="{{ $doc->filedokumen }}">
+                                        <div class="col-md-6 additional-doc-item">
+                                            <div class="bg-light p-3 rounded-3 h-100 position-relative">
+                                                <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.parentElement.remove()"></button>
+                                                <label class="form-label fs-9 fw-bold text-uppercase">Dokumen: {{ $doc->namadokumen }}</label>
+                                                <div class="mb-2">
+                                                    <a href="{{ asset('storage/'.$doc->filedokumen) }}" target="_blank" class="btn btn-sm btn-white border px-3 rounded-pill text-primary-theme fs-9 fw-bold">
+                                                        <i class="material-icons fs-6 align-middle me-1">visibility</i> Lihat File
+                                                    </a>
                                                 </div>
+                                                <!-- Keep existing data for update if needed, but the controller clears & saves new anyway -->
+                                                <input type="hidden" name="existing_doc_name[]" value="{{ $doc->namadokumen }}">
+                                                <input type="hidden" name="existing_doc_file[]" value="{{ $doc->filedokumen }}">
                                             </div>
+                                        </div>
                                         @endforeach
                                     </div>
                                 </div>
@@ -536,6 +624,16 @@
         });
     }
 
+    function bulanOptions(selected = 0) {
+        const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        return bulan.map((nama, i) => {
+            const val = i + 1;
+            return `<option value="${val}" ${selected == val ? 'selected' : ''}>${nama}</option>`;
+        }).join('');
+    }
+
     function addEducation() {
         const html = `
             <div class="education-item bg-light p-3 rounded-3 position-relative mt-2">
@@ -600,34 +698,52 @@
     function addExperience() {
         const count = $('.experience-item').length;
         const html = `
-            <div class="experience-item bg-light p-3 rounded-3 position-relative mt-2">
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fs-9 fw-bold text-uppercase">Nama Perusahaan <span class="text-danger">*</span></label>
-                        <input type="text" name="exp_nama[]" class="form-control border-0 py-2" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fs-9 fw-bold text-uppercase">Posisi/Jabatan <span class="text-danger">*</span></label>
-                        <input type="text" name="exp_posisi[]" class="form-control border-0 py-2" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
-                        <input type="number" name="exp_awal[]" class="form-control border-0 py-2" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fs-9 fw-bold text-uppercase">Tahun Selesai</label>
-                        <input type="number" name="exp_akhir[]" class="form-control border-0 py-2">
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end pb-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="exp_aktif[]" value="1" id="exp_aktif_${count}">
-                            <label class="form-check-label small text-muted" for="exp_aktif_${count}">Masih Bekerja</label>
-                        </div>
+        <div class="experience-item bg-light p-3 rounded-3 position-relative mt-2">
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 fs-9" onclick="this.parentElement.remove()"></button>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fs-9 fw-bold text-uppercase">Nama Perusahaan <span class="text-danger">*</span></label>
+                    <input type="text" name="exp_nama[]" class="form-control border-0 py-2" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fs-9 fw-bold text-uppercase">Posisi/Jabatan <span class="text-danger">*</span></label>
+                    <input type="text" name="exp_posisi[]" class="form-control border-0 py-2" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fs-9 fw-bold text-uppercase">Bulan Masuk <span class="text-danger">*</span></label>
+                    <select name="exp_bulan_awal[]" class="form-select border-0 py-2" required>
+                        <option value="">— Pilih —</option>
+                        ${bulanOptions()}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Masuk <span class="text-danger">*</span></label>
+                    <input type="number" name="exp_awal[]" class="form-control border-0 py-2" placeholder="YYYY" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fs-9 fw-bold text-uppercase">Bulan Selesai</label>
+                    <select name="exp_bulan_akhir[]" class="form-select border-0 py-2">
+                        <option value="">— Pilih —</option>
+                        ${bulanOptions()}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fs-9 fw-bold text-uppercase">Tahun Selesai</label>
+                    <input type="number" name="exp_akhir[]" class="form-control border-0 py-2" placeholder="YYYY">
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end pb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="exp_aktif[]" value="1" id="exp_aktif_0">
+                        <label class="form-check-label small text-muted" for="exp_aktif_0">Masih Bekerja</label>
                     </div>
                 </div>
-            </div>`;
+            </div>
+        </div>`;
         $('#experience_container').append(html);
+        $('#experience_container').show();
     }
 
     function addDocument() {
@@ -716,22 +832,66 @@
             } else {
                 $('#experience_container').fadeIn();
                 $('#btn_add_experience').fadeIn();
-                $('#experience_container').find("input, select").prop('required', true);
+                $('#experience_container').find(
+                    "input[name='exp_nama[]'], input[name='exp_posisi[]'], input[name='exp_awal[]'], select[name='exp_bulan_awal[]']"
+                ).prop('required', true);
                 if ($('.experience-item').length === 0) {
                     addExperience();
                 }
             }
         }).trigger('change');
 
+        // Tambahkan ini di dalam $(document).ready()
+        $(document).on('change', 'input[name="exp_aktif[]"]', function() {
+            const item = $(this).closest('.experience-item');
+            const isChecked = $(this).is(':checked');
+            const now = new Date();
+
+            const bulanAkhir = item.find('select[name="exp_bulan_akhir[]"]');
+            const tahunAkhir = item.find('input[name="exp_akhir[]"]');
+
+            if (isChecked) {
+                // Set nilai bulan & tahun sekarang, tapi tampil disabled ke user
+                bulanAkhir.val(now.getMonth() + 1);
+                tahunAkhir.val(now.getFullYear());
+                bulanAkhir.add(tahunAkhir).css({
+                    'pointer-events': 'none',
+                    'opacity': '0.5'
+                });
+            } else {
+                // Reset & enable kembali
+                bulanAkhir.val('').css({
+                    'pointer-events': '',
+                    'opacity': ''
+                });
+                tahunAkhir.val('').css({
+                    'pointer-events': '',
+                    'opacity': ''
+                });
+            }
+        });
+
         // Form Submit
         $('#form_complete_data').on('submit', function(e) {
             e.preventDefault();
-            
+
+            $('.exp-aktif-hidden').remove();
+
+            $('.experience-item').each(function() {
+                const cb = $(this).find('input[name="exp_aktif[]"]');
+                if (!cb.is(':checked')) {
+                    $(this).append(
+                        '<input type="hidden" class="exp-aktif-hidden" name="exp_aktif[]" value="0">'
+                    );
+                }
+            });
+
             // Clear previous errors
             $('.is-invalid-custom').removeClass('is-invalid-custom');
-            
+
             let isValid = true;
-            $(this).find('[required]').each(function() {
+            // ✅ Exclude checkbox dari required check
+            $(this).find('[required]:not([type="checkbox"])').each(function() {
                 if (!$(this).val()) {
                     $(this).addClass('is-invalid-custom');
                     isValid = false;
@@ -745,11 +905,10 @@
 
             const btn = $('#btn_submit');
             const originalText = btn.html();
-            
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> MENYIMPAN PROFIL...');
-            
+
             const formData = new FormData(this);
-            
+
             $.ajax({
                 url: "{{ route('pelamar.complete-data.post') }}",
                 method: "POST",
@@ -775,8 +934,6 @@
                     if (xhr.status === 422) {
                         const errors = xhr.responseJSON.errors;
                         error = Object.values(errors)[0][0];
-                        
-                        // Map backend errors to red borders if possible
                         Object.keys(errors).forEach(key => {
                             $(`[name="${key}"], [name="${key}[]"]`).addClass('is-invalid-custom');
                         });
@@ -792,10 +949,27 @@
     });
 </script>
 <style>
-    .fs-9 { font-size: 0.75rem; }
-    .fs-10 { font-size: 0.65rem; }
-    .ls-1 { letter-spacing: 0.5px; }
-    .education-item, .experience-item, .skill-item { border-left: 4px solid var(--primary-color); }
-    .btn-white { background-color: white; color: var(--primary-color); }
+    .fs-9 {
+        font-size: 0.75rem;
+    }
+
+    .fs-10 {
+        font-size: 0.65rem;
+    }
+
+    .ls-1 {
+        letter-spacing: 0.5px;
+    }
+
+    .education-item,
+    .experience-item,
+    .skill-item {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .btn-white {
+        background-color: white;
+        color: var(--primary-color);
+    }
 </style>
 @endpush
