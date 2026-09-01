@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Hero Section -->
-<div class="bg-primary-theme position-relative overflow-hidden" style="padding-top: 90px !important; padding-bottom: 50px !important; background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%) !important;">
+<div class="bg-primary-theme position-relative overflow-hidden" style="padding-top: 90px !important; padding-bottom: 50px !important; background: linear-gradient(135deg, {{ $company->primary_color ?? '#1e3a8a' }} 0%, {{ $company->secondary_color ?? '#1e293b' }} 100%) !important;">
     <!-- Animated background accents -->
     <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10 pointer-events-none">
         <div class="position-absolute top-0 start-0 bg-white rounded-circle" style="width: 300px; height: 300px; filter: blur(100px); transform: translate(-50%, -50%);"></div>
@@ -239,10 +239,10 @@
         
         <div class="position-relative pt-2 pb-5 px-md-5">
             <!-- Enhanced Navigation Buttons -->
-            <button class="btn btn-white shadow-lg rounded-circle position-absolute start-0 top-50 translate-middle-y z-index-50 d-none d-md-flex align-items-center justify-content-center transition-all hover-translate-x-n3" id="scroll-prev" style="width: 55px; height: 55px; margin-left: -5px; border: none; background: #fff !important; color: #7f1d1d;">
+            <button class="btn btn-white shadow-lg rounded-circle position-absolute start-0 top-50 translate-middle-y z-index-50 d-none d-md-flex align-items-center justify-content-center transition-all hover-translate-x-n3" id="scroll-prev" style="width: 55px; height: 55px; margin-left: -5px; border: none; background: #fff !important; color: {{ $company->primary_color ?? '#1e3a8a' }};">
                 <i class="material-icons fs-1 fw-bold">chevron_left</i>
             </button>
-            <button class="btn btn-white shadow-lg rounded-circle position-absolute end-0 top-50 translate-middle-y z-index-50 d-none d-md-flex align-items-center justify-content-center transition-all hover-translate-x-3" id="scroll-next" style="width: 55px; height: 55px; margin-right: -5px; border: none; background: #fff !important; color: #7f1d1d;">
+            <button class="btn btn-white shadow-lg rounded-circle position-absolute end-0 top-50 translate-middle-y z-index-50 d-none d-md-flex align-items-center justify-content-center transition-all hover-translate-x-3" id="scroll-next" style="width: 55px; height: 55px; margin-right: -5px; border: none; background: #fff !important; color: {{ $company->primary_color ?? '#1e3a8a' }};">
                 <i class="material-icons fs-1 fw-bold">chevron_right</i>
             </button>
 
@@ -253,7 +253,7 @@
                         <div class="p-1 bg-primary-theme opacity-75"></div>
                         <div class="card-body p-4 pt-5">
                             <div class="d-flex align-items-start mb-4">
-                                <div class="stat-icon bg-light text-primary-theme me-3 shadow-sm rounded-circle" style="min-width: 55px; height: 55px; background: rgba(127, 29, 29, 0.05) !important;">
+                                <div class="stat-icon bg-light text-primary-theme me-3 shadow-sm rounded-circle" style="min-width: 55px; height: 55px; background: rgba(30, 58, 138, 0.05) !important;">
                                     @php $perusahaan = $job->register->perusahaan; @endphp
                                     @if($perusahaan->logo)
                                         <img src="{{ asset('storage/'.$perusahaan->logo) }}" class="rounded-circle" style="width: 100%; height: 100%; object-fit: contain;">
@@ -275,7 +275,7 @@
                             </div>
                             
                             <div class="d-flex flex-wrap gap-2 mb-4">
-                                <span class="badge bg-light text-danger-emphasis px-3 py-2 rounded-pill fs-8 fw-semibold" style="color: #7f1d1d !important; background: rgba(127, 29, 29, 0.05) !important;">
+                                <span class="badge bg-light text-danger-emphasis px-3 py-2 rounded-pill fs-8 fw-semibold" style="color: {{ $company->primary_color ?? '#1e3a8a' }} !important; background: rgba(30, 58, 138, 0.05) !important;">
                                     <i class="material-icons fs-9 align-middle me-1">place</i> {{ $job->kategorilokasi }}
                                 </span>
                                 <span class="badge bg-light text-success-emphasis px-3 py-2 rounded-pill fs-8 fw-semibold">
@@ -290,7 +290,7 @@
                             
                             <div class="d-flex justify-content-between align-items-center pt-3 border-top border-light">
                                 <span class="text-muted fs-8 d-flex align-items-center"><i class="material-icons fs-8 me-1 text-primary-theme opacity-75">update</i> Baru Saja</span>
-                                <a href="{{ route('vacancy.detail', encrypt($job->id)) }}" class="btn btn-outline-danger btn-sm px-4 rounded-pill fw-bold border-2 hover-bg-red transition-all">Lihat Detail</a>
+                                <a href="{{ route('vacancy.detail', encrypt($job->id)) }}" class="btn btn-detail-vacancy btn-sm px-4 rounded-pill fw-bold border-2 transition-all" style="color: {{ $company->primary_color ?? '#1e3a8a' }}; border-color: {{ $company->primary_color ?? '#1e3a8a' }};">Lihat Detail</a>
                             </div>
                         </div>
                     </div>
@@ -326,7 +326,7 @@
                 <span class="text-primary-theme fw-bold mb-2 d-block">LOKASI PELAKSANAAN</span>
                 <h2 class="fw-bold mb-4 fs-1 text-dark">Ayo Datang & <span class="text-primary-theme">Bergabung!</span></h2>
                 <p class="text-muted fs-5 mb-5 pe-lg-5 lh-lg">Kami mengundang Anda untuk hadir langsung di lokasi pelaksanaan Job Fair. Pastikan Anda sudah melengkapi profil digital Anda sebelum hadir untuk mempermudah proses lamaran.</p>
-                <div class="d-flex align-items-start mb-4 p-4 rounded-4 bg-light border-start border-4 border-danger">
+                <div class="d-flex align-items-start mb-4 p-4 rounded-4 bg-light border-start border-4" style="border-left-color: {{ $company->primary_color ?? '#1e3a8a' }} !important;">
                     <div class="stat-icon bg-white text-primary-theme me-4 shadow-sm">
                         <i class="material-icons">place</i>
                     </div>
@@ -363,8 +363,10 @@
     .z-index-1 { z-index: 1; }
     .rotate-3 { transform: rotate(3deg); transition: 0.5s; pointer-events: none; }
     .transition-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .hover-shadow-lg:hover { transform: translateY(-10px); box-shadow: 0 25px 50px -12px rgba(225, 29, 72, 0.15) !important; }
+    .hover-shadow-lg:hover { transform: translateY(-10px); box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.15) !important; }
     .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .btn-detail-vacancy { background: transparent; }
+    .btn-detail-vacancy:hover { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important; }
     html { scroll-behavior: smooth; }
 </style>
 

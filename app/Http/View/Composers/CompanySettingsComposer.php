@@ -11,8 +11,8 @@ class CompanySettingsComposer
     {
         $company = PengaturanPerusahaan::first() ?: (object)[
             'nama_perusahaan' => 'FindTalen Platform',
-            'primary_color' => '#e11d48',
-            'secondary_color' => '#0f172a',
+            'primary_color' => '#1e3a8a',
+            'secondary_color' => '#1e293b',
             'logo' => null,
             'deskripsi' => 'Platform Rekrutmen & Job Fair',
             'alamat_lengkap' => '-',

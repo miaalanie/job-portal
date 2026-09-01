@@ -6,7 +6,7 @@
 <div class="row g-5 g-xl-10">
     <!-- Welcome Header: Modern Hero Style -->
     <div class="col-xxl-12 mb-5">
-        <div class="card card-flush h-md-100 border-0 shadow-sm" style="background: linear-gradient(112.14deg, {{ $company->primary_color ?? '#7f1d1d' }} 0%, {{ $company->secondary_color ?? '#450a0a' }} 100%);">
+        <div class="card card-flush h-md-100 border-0 shadow-sm" style="background: linear-gradient(112.14deg, {{ $company->primary_color ?? '#1e3a8a' }} 0%, {{ $company->secondary_color ?? '#1e293b' }} 100%);">
             <div class="card-body d-flex flex-column justify-content-center p-10 position-relative">
                 <div class="position-absolute top-0 end-0 opacity-10 p-10">
                     <i class="material-icons fs-5tx text-white">business_center</i>

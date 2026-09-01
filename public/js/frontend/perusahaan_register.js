@@ -128,7 +128,7 @@ $(document).ready(function() {
                     icon: 'success',
                     title: 'Registrasi Berhasil',
                     text: res.message,
-                    confirmButtonColor: '#e11d48'
+                    confirmButtonColor: '#1e3a8a'
                 }).then(() => {
                     window.location.href = RegistrationFormConfig.url_register_success;
                 });
@@ -148,7 +148,7 @@ $(document).ready(function() {
                     icon: 'error',
                     title: 'Oops!',
                     html: msg,
-                    confirmButtonColor: '#e11d48'
+                    confirmButtonColor: '#1e3a8a'
                 });
             }
         });

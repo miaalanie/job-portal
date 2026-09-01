@@ -17,12 +17,26 @@ class EventRegistrationController extends Controller
     {
         $user = Auth::user();
         $isAdminEvent = $user->hasRole('Admin Event');
+        $isAdminPerusahaan = $user->hasRole('Admin Perusahaan');
 
-        // Jika Admin Event, paksa scope ke event yang dikelolanya
         if ($isAdminEvent) {
+            // Admin Event: paksa scope ke event yang dikelolanya
             $idperiode = $user->ideven;
             $events = Even::where('id', $idperiode)->get();
+        } elseif ($isAdminPerusahaan) {
+            // Admin Perusahaan: hanya event yang dia buat sendiri
+            $events = Even::where('useradd', $user->id)
+                ->orderBy('tanggalawal', 'desc')
+                ->get();
+
+            $idperiode = $request->idperiode;
+
+            // Guard: kalo dia coba filter idperiode yg bukan event miliknya, abaikan (biar gak bisa liat punya orang lain)
+            if ($idperiode && !$events->contains('id', $idperiode)) {
+                $idperiode = null;
+            }
         } else {
+            // Superadmin dan role lain: bebas, semua event
             $idperiode = $request->idperiode;
             $events = Even::select('id', 'namaperiode')->get();
         }
@@ -33,6 +47,9 @@ class EventRegistrationController extends Controller
 
         if ($idperiode) {
             $query->where('idperiode', $idperiode);
+        } elseif ($isAdminPerusahaan) {
+            // Kalo Admin Perusahaan gak pilih event spesifik, tetep dibatasin cuma event2 miliknya
+            $query->whereIn('idperiode', $events->pluck('id'));
         }
 
         if ($status !== null) {
@@ -42,7 +59,6 @@ class EventRegistrationController extends Controller
 
         $registrations = $query->latest()->get();
 
-        // Statistics for User-Friendly Dashboard
         $stats = [
             'total'   => $registrations->count(),
             'active'  => $registrations->where('aktivasi', 1)->count(),
@@ -50,7 +66,7 @@ class EventRegistrationController extends Controller
             'paid'    => $registrations->filter(fn($r) => $r->payment != null)->count(),
         ];
 
-        return view('admin.event_registration.index', compact('registrations', 'events', 'idperiode', 'stats', 'status', 'isAdminEvent'));
+        return view('admin.event_registration.index', compact('registrations', 'events', 'idperiode', 'stats', 'status', 'isAdminEvent', 'isAdminPerusahaan'));
     }
 
     public function showDetail($id)

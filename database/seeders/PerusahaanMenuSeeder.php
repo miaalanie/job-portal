@@ -24,7 +24,7 @@ class PerusahaanMenuSeeder extends Seeder
             return;
         }
 
-        // 1. Dashboard Perusahaan
+        // 1. 
         $this->createMenuWithAkses('Dashboard Perusahaan', '/admin/perusahaan/dashboard', 'admin.perusahaan.dashboard', 0, null, 'dashboard', $role);
 
         // 2. Hub Rekrutmen (Parent)

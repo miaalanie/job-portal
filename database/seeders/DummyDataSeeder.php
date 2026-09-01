@@ -34,8 +34,8 @@ class DummyDataSeeder extends Seeder
             ['id' => 1],
             [
                 'nama_perusahaan' => 'FindTalen Solution',
-                'primary_color' => '#7f1d1d',
-                'secondary_color' => '#111827'
+                'primary_color' => '#1e3a8a',
+                'secondary_color' => '#1e293b'
             ]
         );
 

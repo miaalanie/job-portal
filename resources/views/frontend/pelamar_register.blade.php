@@ -121,7 +121,7 @@
                         title: 'Registrasi Berhasil!',
                         text: response.message,
                         confirmButtonText: 'Buka Email Saya',
-                        confirmButtonColor: '#7f1d1d'
+                        confirmButtonColor: '#1e3a8a'
                     }).then(() => {
                         window.location.href = "{{ route('login') }}";
                     });
@@ -133,7 +133,7 @@
                         icon: 'error',
                         title: 'Registrasi Gagal',
                         text: error,
-                        confirmButtonColor: '#7f1d1d'
+                        confirmButtonColor: '#1e3a8a'
                     });
                 }
             });

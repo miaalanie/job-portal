@@ -5,9 +5,9 @@
     <title>CV - {{ $applicant->namalengkap }}</title>
     <style>
         body { font-family: sans-serif; font-size: 12px; color: #333; line-height: 1.6; }
-        .header { border-bottom: 2px solid #7f1d1d; padding-bottom: 10px; margin-bottom: 20px; }
-        .name { font-size: 24px; font-weight: bold; color: #7f1d1d; text-transform: uppercase; }
-        .section-title { font-size: 14px; font-weight: bold; background: #f3f4f6; padding: 5px 10px; margin: 15px 0 10px; border-left: 4px solid #7f1d1d; }
+        .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px; }
+        .name { font-size: 24px; font-weight: bold; color: #1e3a8a; text-transform: uppercase; }
+        .section-title { font-size: 14px; font-weight: bold; background: #f3f4f6; padding: 5px 10px; margin: 15px 0 10px; border-left: 4px solid #1e3a8a; }
         .content-item { margin-bottom: 10px; }
         .date { color: #666; font-size: 11px; font-style: italic; }
         .label { font-weight: bold; width: 120px; display: inline-block; }

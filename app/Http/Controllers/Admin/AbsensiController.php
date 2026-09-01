@@ -20,17 +20,25 @@ class AbsensiController extends Controller
     {
         $user = Auth::user();
         $isAdminEvent = $user->hasRole('Admin Event');
+        $isAdminPerusahaan = $user->hasRole('Admin Perusahaan');
 
         if ($isAdminEvent) {
             $idperiode = $user->ideven;
             $events = Even::where('id', $idperiode)->get();
+        } elseif ($isAdminPerusahaan) {
+            // Admin Perusahaan hanya boleh liat event yang dia buat sendiri
+            $events = Even::where('useradd', $user->id)->orderBy('tanggalawal', 'desc')->get();
+            $idperiode = $request->idperiode;
+            if ($idperiode && !$events->contains('id', $idperiode)) {
+                $idperiode = null;
+            }
         } else {
             $idperiode = $request->idperiode;
             $events = Even::select('id', 'namaperiode')->get();
         }
 
         // Determine correct company context
-        if ($user->hasRole('Admin Perusahaan')) {
+        if ($isAdminPerusahaan) {
             $idperusahaan = $user->idperusahaan;
         } else {
             $idperusahaan = $request->idperusahaan;
@@ -40,32 +48,36 @@ class AbsensiController extends Controller
             ->withCount('lamarans');
 
         if ($idperiode) {
-            $query->whereHas('register', function($q) use ($idperiode) {
+            $query->whereHas('register', function ($q) use ($idperiode) {
                 $q->where('idperiode', $idperiode);
+            });
+        } elseif ($isAdminPerusahaan) {
+            // Kalo gak pilih event spesifik, tetep dibatasin ke event2 miliknya
+            $query->whereHas('register', function ($q) use ($events) {
+                $q->whereIn('idperiode', $events->pluck('id'));
             });
         }
 
         if ($idperusahaan) {
-            $query->whereHas('register', function($q) use ($idperusahaan) {
+            $query->whereHas('register', function ($q) use ($idperusahaan) {
                 $q->where('idperusahaan', $idperusahaan);
             });
         }
 
         $vacancies = $query->latest()->get();
-        
+
         // Only fetch list of companies if Superadmin/App Admin/Admin Event
-        $companies = !$user->hasRole('Admin Perusahaan') ? Perusahaan::all() : collect();
+        $companies = !$isAdminPerusahaan ? Perusahaan::all() : collect();
 
         // Also restrict companies specifically for Admin Event if needed, but Perusahaan::all() is fine for dropdown
         if ($isAdminEvent) {
-             $companies = Perusahaan::whereHas('registers', function($q) use ($idperiode) {
-                 $q->where('idperiode', $idperiode);
-             })->get();
+            $companies = Perusahaan::whereHas('registers', function ($q) use ($idperiode) {
+                $q->where('idperiode', $idperiode);
+            })->get();
         }
 
-        return view('admin.absensi.index', compact('vacancies', 'events', 'companies', 'idperiode', 'idperusahaan', 'isAdminEvent'));
+        return view('admin.absensi.index', compact('vacancies', 'events', 'companies', 'idperiode', 'idperusahaan', 'isAdminEvent', 'isAdminPerusahaan'));
     }
-
     public function show($id)
     {
         try {
@@ -91,7 +103,7 @@ class AbsensiController extends Controller
         try {
             $decryptedId = Crypt::decrypt($idlowongan);
             $loker = Lowongan::with('register')->findOrFail($decryptedId);
-            
+
             // Security check for Company Admins
             $user = Auth::user();
             if ($user->hasRole('Admin Perusahaan') && $loker->register->idperusahaan != $user->idperusahaan) {
@@ -99,7 +111,7 @@ class AbsensiController extends Controller
             }
 
             $presents = $request->presents ?? []; // Array of Lamaran IDs
-            
+
             // Get all lamarans for this vacancy to handle "removal" of presence if unchecked
             $allLamarans = Lamaran::where('idlowongan', $decryptedId)->pluck('id')->toArray();
 
@@ -189,7 +201,6 @@ class AbsensiController extends Controller
             );
 
             return redirect()->route('pelamar.dashboard')->with('success', 'Kehadiran Anda berhasil tercatat. Selamat berjuang!');
-
         } catch (\Exception $e) {
             return redirect()->route('pelamar.dashboard')->with('error', 'QR Code tidak valid atau terjadi kesalahan.');
         }

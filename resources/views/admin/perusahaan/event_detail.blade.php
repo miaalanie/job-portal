@@ -240,9 +240,9 @@
 <style>
     .bg-gradient-dark { background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%); }
     .object-fit-cover { object-fit: cover; }
-    .btn-check:checked + label { border-color: #7f1d1d !important; background-color: rgba(127, 29, 29, 0.05) !important; }
-    .btn-check:checked + label h4 { color: #7f1d1d !important; }
-    .bg-light-danger { background-color: rgba(127, 29, 29, 0.08) !important; color: #7f1d1d !important; }
+    .btn-check:checked + label { border-color: var(--primary-color) !important; background-color: rgba(30, 58, 138, 0.05) !important; }
+    .btn-check:checked + label h4 { color: var(--primary-color) !important; }
+    .bg-light-danger { background-color: rgba(30, 58, 138, 0.08) !important; color: #1e3a8a !important; }
 </style>
 @endpush
 

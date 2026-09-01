@@ -9,14 +9,14 @@
     <style>
         body { background: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .card-container { width: 100%; max-width: 450px; margin: 40px auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.1); position: relative; border: 1px solid #eee; }
-        .card-header-custom { background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); padding: 30px; color: white; text-align: center; }
+        .card-header-custom { background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%); padding: 30px; color: white; text-align: center; }
         .profile-photo { width: 120px; height: 120px; border-radius: 50%; border: 5px solid white; object-fit: cover; margin-top: -60px; background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .qr-section { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 15px; margin: 20px; border: 1px dashed #ddd; }
         .info-table { width: 100%; font-size: 0.85rem; }
         .info-table td { padding: 8px 0; border-bottom: 1px solid #f1f1f1; }
         .info-label { color: #666; font-weight: 600; width: 120px; }
         .info-value { color: #111; font-weight: 700; }
-        .badge-event { background: rgba(127, 29, 29, 0.1); color: #7f1d1d; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; padding: 5px 12px; border-radius: 50px; display: inline-block; margin-bottom: 5px; }
+        .badge-event { background: rgba(30, 58, 138, 0.1); color: #1e3a8a; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; padding: 5px 12px; border-radius: 50px; display: inline-block; margin-bottom: 5px; }
         
         @media print {
             body { background: white; padding: 0; margin: 0; }

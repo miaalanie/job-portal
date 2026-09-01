@@ -35,7 +35,7 @@
 
         /* Sidebar Theme Customization */
         .app-sidebar {
-            background-image: linear-gradient(180deg, {{ $company->secondary_color ?? '#450a0a' }}ee 0%, {{ $company->primary_color ?? '#7f1d1d' }}fa 100%), 
+            background-image: linear-gradient(180deg, {{ $company->secondary_color ?? '#1e293b' }}ee 0%, {{ $company->primary_color ?? '#1e3a8a' }}fa 100%), 
                               url('{{ asset('admin/media/sidebar-bg.png') }}') !important;
             background-size: cover !important;
             background-position: center !important;
@@ -88,17 +88,17 @@
         }
         
         .app-sidebar-toggle i {
-            color: {{ $company->primary_color ?? '#7f1d1d' }} !important;
+            color: {{ $company->primary_color ?? '#1e3a8a' }} !important;
         }
 
         .app-header {
             background-color: #ffffff !important;
-            border-bottom: 3px solid {{ $company->primary_color ?? '#7f1d1d' }} !important;
+            border-bottom: 3px solid {{ $company->primary_color ?? '#1e3a8a' }} !important;
             box-shadow: 0 1px 15px rgba(0, 0, 0, 0.03) !important;
         }
 
         .app-navbar-item .btn-icon i {
-            color: {{ $company->primary_color ?? '#7f1d1d' }} !important;
+            color: {{ $company->primary_color ?? '#1e3a8a' }} !important;
             opacity: 0.8;
             transition: all 0.2s ease;
         }

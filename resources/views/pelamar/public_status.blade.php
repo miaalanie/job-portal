@@ -8,15 +8,15 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         body { background: #f8f9fa; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        .header { background: #fff; padding: 25px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 2px solid #7f1d1d; }
+        .header { background: #fff; padding: 25px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 2px solid #1e3a8a; }
         .profile-info { text-align: center; margin-top: -50px; }
         .profile-img { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); object-fit: cover; background: #fff; }
         .job-card { background: #fff; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); transition: all 0.3s; margin-bottom: 15px; overflow: hidden; }
         .job-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .company-logo { width: 45px; height: 45px; border-radius: 12px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .badge-status { font-size: 0.7rem; font-weight: 800; padding: 6px 12px; border-radius: 50px; text-transform: uppercase; }
-        .btn-theme { background: #7f1d1d; color: #fff; border: none; font-weight: 700; border-radius: 50px; padding: 12px 25px; }
-        .btn-theme:hover { background: #450a0a; color: #fff; }
+        .btn-theme { background: #1e3a8a; color: #fff; border: none; font-weight: 700; border-radius: 50px; padding: 12px 25px; }
+        .btn-theme:hover { background: #1e293b; color: #fff; }
     </style>
 </head>
 <body>

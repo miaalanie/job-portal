@@ -15,7 +15,7 @@
         .credential-item { margin-bottom: 10px; }
         .credential-label { color: #64748b; font-size: 14px; margin-bottom: 5px; }
         .credential-value { color: #1e293b; font-family: monospace; font-size: 18px; font-weight: 600; }
-        .warning-box { border-left: 4px solid #ef4444; background-color: #fef2f2; padding: 15px; margin-bottom: 30px; color: #991b1b; font-size: 14px; }
+        .warning-box { border-left: 4px solid #ef4444; background-color: #fef2f2; padding: 15px; margin-bottom: 30px; color: #1e3a8a; font-size: 14px; }
         .cta-container { text-align: center; }
         .btn { display: inline-block; padding: 12px 30px; background-color: #1a56db; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08); transition: all 0.2s; }
         .footer { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 40px; }

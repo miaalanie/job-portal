@@ -14,8 +14,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <style>
         :root {
-            --primary-color: {{ $company->primary_color ?? '#7f1d1d' }};
-            --secondary-color: {{ $company->secondary_color ?? '#111827' }};
+            --primary-color: {{ $company->primary_color ?? '#1e3a8a' }};
+            --secondary-color: {{ $company->secondary_color ?? '#1e293b' }};
             --bg-light: #fff5f5;
             --text-dark: #111827;
         }

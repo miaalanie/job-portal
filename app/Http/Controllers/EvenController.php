@@ -11,7 +11,21 @@ class EvenController extends Controller
 {
     public function index()
     {
-        $events = Even::orderBy('tanggalawal', 'desc')->get();
+        $user = Auth::user();
+
+        if ($user->hasRole('Superadmin')) {
+            // Super Admin melihat semua event
+            $events = Even::orderBy('tanggalawal', 'desc')->get();
+        } elseif ($user->hasRole('Admin Perusahaan')) {
+            // Admin Perusahaan hanya melihat event yang dia buat
+            $events = Even::where('useradd', $user->id)
+                ->orderBy('tanggalawal', 'desc')
+                ->get();
+        } else {
+            // Role lain tidak mendapatkan event
+            $events = collect();
+        }
+
         return view('admin.even.index', compact('events'));
     }
 
@@ -35,7 +49,6 @@ class EvenController extends Controller
             'gambar_layout' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'kuota_maksimum' => 'nullable|integer|min:0',
             'maksimum_apply' => 'nullable|integer|min:0',
-            'statusaktif' => 'boolean',
             'statusheadline' => 'boolean',
             'statuspaket' => 'boolean',
             'biaya' => 'required_if:statuspaket,0|nullable|numeric|min:0',
@@ -46,15 +59,39 @@ class EvenController extends Controller
             'sponsors.*.logo' => 'nullable|image|max:1024'
         ]);
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request) {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+
+            $user = Auth::user();
+
             $data = $request->only([
-                'namaperiode', 'visi', 'tanggalawal', 'tanggalselesai', 
-                'lokasi', 'alamat_lengkap', 'latitude', 'longitude',
-                'kuota_maksimum', 'maksimum_apply', 'biaya'
+                'namaperiode',
+                'visi',
+                'tanggalawal',
+                'tanggalselesai',
+                'lokasi',
+                'alamat_lengkap',
+                'latitude',
+                'longitude',
+                'kuota_maksimum',
+                'maksimum_apply',
+                'biaya'
             ]);
-            
-            $data['useradd'] = Auth::id();
-            $data['statusaktif'] = $request->has('statusaktif');
+
+            $data['useradd'] = $user->id;
+
+            // Status event ditentukan berdasarkan role user
+            if ($user->hasRole('Superadmin')) {
+                $data['statusaktif'] = true;
+                $data['status_approval'] = 'approved';
+                $data['approved_by'] = $user->id;
+                $data['catatan'] = null;
+            } elseif ($user->hasRole('Admin Perusahaan')) {
+                $data['statusaktif'] = false;
+                $data['status_approval'] = 'pending';
+                $data['approved_by'] = null;
+                $data['catatan'] = null;
+            }
+
             $data['statusheadline'] = $request->has('statusheadline');
             $data['statuspaket'] = $request->has('statuspaket');
             $data['status_sesi'] = $request->input('status_sesi', 0);
@@ -116,6 +153,58 @@ class EvenController extends Controller
         });
     }
 
+    public function approve($id)
+    {
+        $user = Auth::user();
+
+        if (!$user->hasRole('Superadmin')) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses.'], 403);
+        }
+
+        $event = Even::findOrFail(decrypt($id));
+
+        if ($event->status_approval !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Event ini sudah diproses sebelumnya.'], 422);
+        }
+
+        $event->update([
+            'status_approval' => 'approved',
+            'statusaktif'     => true,
+            'approved_by'     => $user->id,
+            'catatan'         => null,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Event berhasil disetujui.']);
+    }
+
+    public function reject(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$user->hasRole('Superadmin')) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses.'], 403);
+        }
+
+        $request->validate([
+            'catatan' => 'required|string|max:1000',
+        ]);
+
+        $event = Even::findOrFail(decrypt($id));
+
+        if ($event->status_approval !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Event ini sudah diproses sebelumnya.'], 422);
+        }
+
+        $event->update([
+            'status_approval' => 'rejected',
+            'statusaktif'     => false,
+            'approved_by'     => $user->id,
+            'catatan'         => $request->catatan,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Event berhasil ditolak.']);
+    }
+
     public function show($id)
     {
         try {
@@ -124,7 +213,7 @@ class EvenController extends Controller
             $realId = $id;
         }
 
-        $event = Even::with(['sesis', 'sponsors', 'pakets', 'registers' => function($q) {
+        $event = Even::with(['sesis', 'sponsors', 'pakets', 'registers' => function ($q) {
             $q->where('aktivasi', 1);
         }])->findOrFail($realId);
 
@@ -162,6 +251,7 @@ class EvenController extends Controller
     public function update(Request $request, $id)
     {
         $event = Even::findOrFail($id);
+        $user = Auth::user();
 
         $request->validate([
             'namaperiode' => 'required|string|max:255',
@@ -185,17 +275,49 @@ class EvenController extends Controller
             'pakets.*.harga' => 'required_with:pakets|numeric|min:0'
         ]);
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $event) {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $event, $user) {
             $data = $request->only([
-                'namaperiode', 'visi', 'tanggalawal', 'tanggalselesai', 
-                'lokasi', 'alamat_lengkap', 'latitude', 'longitude',
-                'kuota_maksimum', 'maksimum_apply', 'biaya'
+                'namaperiode',
+                'visi',
+                'tanggalawal',
+                'tanggalselesai',
+                'lokasi',
+                'alamat_lengkap',
+                'latitude',
+                'longitude',
+                'kuota_maksimum',
+                'maksimum_apply',
+                'biaya'
             ]);
             $data['userupdate'] = Auth::id();
             $data['statusaktif'] = $request->has('statusaktif');
             $data['statusheadline'] = $request->has('statusheadline');
             $data['statuspaket'] = $request->has('statuspaket');
             $data['status_sesi'] = $request->input('status_sesi', 0);
+
+            // Guard statusaktif & status_approval berdasarkan role
+            if ($user->hasRole('Superadmin')) {
+                // Superadmin bebas nentuin aktif/tidak langsung dari checkbox
+                $data['statusaktif'] = $request->has('statusaktif');
+                // Kalo Superadmin edit event miliknya sendiri yg belum ke-approve, otomatis approve
+                if ($event->status_approval !== 'approved') {
+                    $data['status_approval'] = 'approved';
+                    $data['approved_by'] = $user->id;
+                    $data['catatan'] = null;
+                }
+            } elseif ($user->hasRole('Admin Perusahaan')) {
+                // Admin Perusahaan nggak boleh nyentuh statusaktif manual
+                // Kalo event ini sebelumnya ditolak, submit ulang -> balik ke pending
+                if ($event->status_approval === 'rejected') {
+                    $data['status_approval'] = 'pending';
+                    $data['catatan'] = null;
+                    $data['approved_by'] = null;
+                    $data['statusaktif'] = false;
+                } else {
+                    // Kalo masih pending atau udah approved, statusaktif ikut status_approval, bukan checkbox
+                    $data['statusaktif'] = $event->status_approval === 'approved' ? $event->statusaktif : false;
+                }
+            }
 
             if ($request->hasFile('gambar')) {
                 if ($event->gambar) {
@@ -270,7 +392,7 @@ class EvenController extends Controller
         } catch (\Exception $e) {
             $realId = $id;
         }
-        
+
         $event = Even::findOrFail($realId);
         if ($event->gambar) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($event->gambar);
@@ -332,7 +454,7 @@ class EvenController extends Controller
         $event->save();
 
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'message' => 'Status aktif event ' . $event->namaperiode . ' berhasil diubah.',
             'statusaktif' => $event->statusaktif
         ]);
@@ -350,7 +472,7 @@ class EvenController extends Controller
         $event->save();
 
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'message' => 'Status headline event ' . $event->namaperiode . ' berhasil diubah.',
             'statusheadline' => $event->statusheadline
         ]);

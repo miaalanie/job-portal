@@ -153,8 +153,8 @@
     }
 
     .score-red {
-        background: #ffe0e0;
-        color: #991b1b;
+        background: #e0e7ff;
+        color: #1e3a8a;
     }
 
     #rekomendasiTab .nav-link {
@@ -164,8 +164,8 @@
     }
 
     #rekomendasiTab .nav-link.active {
-        color: #8B1A1A;
-        background: rgba(139, 26, 26, 0.08);
+        color: #1e3a8a;
+        background: rgba(30, 58, 138, 0.08);
     }
 
     #rekomendasiTab .nav-link:hover:not(.active) {

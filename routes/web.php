@@ -223,6 +223,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::post('/role-menu', [AksesMenuController::class, 'store'])->name('admin.role-menu.store');
 
     Route::get('/event', [EvenController::class, 'index'])->name('admin.event');
+    Route::post('event/{id}/approve', [EvenController::class, 'approve'])->name('admin.event.approve');
+    Route::post('event/{id}/reject', [EvenController::class, 'reject'])->name('admin.event.reject');
     Route::post('/event/{id}/toggle-status', [EvenController::class, 'toggleStatus'])->name('admin.event.toggle-status');
     Route::post('/event/{id}/toggle-headline', [EvenController::class, 'toggleHeadline'])->name('admin.event.toggle-headline');
     Route::get('/event/create', [EvenController::class, 'create'])->name('admin.event.create');

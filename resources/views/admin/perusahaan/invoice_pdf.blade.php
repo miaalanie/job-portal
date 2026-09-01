@@ -6,10 +6,10 @@
     <style>
         body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; }
         .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; }
-        .header-table { width: 100%; margin-bottom: 40px; border-bottom: 2px solid {{ $pengaturan->primary_color ?? '#7f1d1d' }}; padding-bottom: 20px; }
+        .header-table { width: 100%; margin-bottom: 40px; border-bottom: 2px solid {{ $pengaturan->primary_color ?? '#1e3a8a' }}; padding-bottom: 20px; }
         .logo { max-width: 150px; }
         .company-info { text-align: right; }
-        .company-info h2 { margin: 0; color: {{ $pengaturan->primary_color ?? '#7f1d1d' }}; font-size: 24px; }
+        .company-info h2 { margin: 0; color: {{ $pengaturan->primary_color ?? '#1e3a8a' }}; font-size: 24px; }
         .company-info p { margin: 2px 0; font-size: 11px; color: #666; }
         
         .client-info-table { width: 100%; margin-bottom: 40px; }
@@ -24,7 +24,7 @@
         
         .total-table { width: 100%; }
         .total-table td { text-align: right; padding: 5px 0; }
-        .total-row { font-size: 18px; font-weight: bold; color: {{ $pengaturan->primary_color ?? '#7f1d1d' }}; }
+        .total-row { font-size: 18px; font-weight: bold; color: {{ $pengaturan->primary_color ?? '#1e3a8a' }}; }
         
         .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; margin-top: 10px; }
         .status-paid { background: #e8f5e9; color: #2e7d32; }

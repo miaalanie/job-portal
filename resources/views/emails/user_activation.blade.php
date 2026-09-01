@@ -4,8 +4,8 @@
     <title>Aktivasi Akun</title>
 </head>
 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-    <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; border-top: 5px solid #e11d48;">
-        <h2 style="color: #e11d48;">Selamat Datang di FindTalen!</h2>
+    <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; border-top: 5px solid #1e3a8a;">
+        <h2 style="color: #1e3a8a;">Selamat Datang di FindTalen!</h2>
         <p>Halo <strong>{{ $companyName }}</strong>,</p>
         <p>Terima kasih telah mendaftarkan akun di platform FindTalen. Berikut adalah detail akun Anda:</p>
         <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -16,7 +16,7 @@
         <p>Untuk mengaktifkan akun Anda, silakan klik tombol di bawah ini:</p>
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ route('perusahaan.activate', ['token' => $user->activation_token]) }}" 
-               style="background-color: #e11d48; color: white; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block;">
+               style="background-color: #1e3a8a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block;">
                Aktifkan Akun Sekarang
             </a>
         </div>

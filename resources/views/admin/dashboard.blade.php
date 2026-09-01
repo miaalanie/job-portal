@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Welcome Area -->
-<div class="card card-flush h-lg-100 border-0 shadow-sm mb-10 overflow-hidden" style="background: linear-gradient(112.14deg, {{ $company->primary_color ?? '#7f1d1d' }} 0%, {{ $company->secondary_color ?? '#450a0a' }} 100%);">
+<div class="card card-flush h-lg-100 border-0 shadow-sm mb-10 overflow-hidden" style="background: linear-gradient(112.14deg, {{ $company->primary_color ?? '#1e3a8a' }} 0%, {{ $company->secondary_color ?? '#1e293b' }} 100%);">
     <div class="card-body d-flex flex-column justify-content-center p-10 position-relative">
         <h1 class="fw-bold text-white fs-2qx mb-1">Pusat Kendali {{ $company->nama_perusahaan ?? 'Platform' }}</h1>
         <span class="text-white opacity-75 fw-semibold fs-4">Halo {{ Auth::user()->name }}, monitor seluruh aktivitas platform hari ini.</span>

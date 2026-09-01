@@ -19,7 +19,7 @@ class PengaturanPerusahaanSeeder extends Seeder
                 'alamat_lengkap' => 'Sentral Senayan II, Jl. Asia Afrika No.8, Jakarta Pusat',
                 'email' => 'hello@findtalen.id',
                 'telp' => '021-500-999',
-                'primary_color' => '#e11d48', // Modern Crimson Red
+                'primary_color' => '#1e3a8a', // Modern Blue
                 'secondary_color' => '#0f172a', // Elegant Dark Slate
                 'deskripsi' => 'Platform Rekrutmen & Job Fair Paling Modern, Elegan, dan Terpercaya untuk Karir Masa Depan Anda.'
             ]

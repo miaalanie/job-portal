@@ -5,13 +5,13 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
         .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: #7f1d1d; margin-bottom: 5px; }
+        .header h1 { color: #1e3a8a; margin-bottom: 5px; }
         .header p { color: #666; margin-top: 0; }
         .content { margin-bottom: 30px; }
         .footer { text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
-        .button { display: inline-block; padding: 14px 30px; background-color: #7f1d1d; color: #ffffff; text-decoration: none; border-radius: 30px; font-weight: bold; }
+        .button { display: inline-block; padding: 14px 30px; background-color: #1e3a8a; color: #ffffff; text-decoration: none; border-radius: 30px; font-weight: bold; }
         .info-card { background: #fff8f8; padding: 20px; border-radius: 12px; border: 1px solid #ffeded; margin-bottom: 25px; }
-        .price-badge { background: #7f1d1d; color: #fff; padding: 8px 15px; border-radius: 5px; font-weight: bold; font-size: 18px; }
+        .price-badge { background: #1e3a8a; color: #fff; padding: 8px 15px; border-radius: 5px; font-weight: bold; font-size: 18px; }
         .steps { padding-left: 20px; color: #555; }
         .steps li { margin-bottom: 10px; }
     </style>
@@ -43,7 +43,7 @@
                 </table>
             </div>
 
-            <h4 style="color: #7f1d1d; border-bottom: 2px solid #ffeded; padding-bottom: 5px;">Langkah Selanjutnya:</h4>
+            <h4 style="color: #1e3a8a; border-bottom: 2px solid #ffeded; padding-bottom: 5px;">Langkah Selanjutnya:</h4>
             <ul class="steps">
                 <li><strong>Instruksi Pembayaran:</strong> Silakan lakukan pembayaran sesuai dengan biaya di atas ke nomor rekening operasional kami yang tertera di menu "Invoices" pada dashboard.</li>
                 <li><strong>Konfirmasi Admin:</strong> Setelah pembayaran diterima, admin kami akan melakukan validasi keikutsertaan Anda (Status Aktivasi: Aktif).</li>
