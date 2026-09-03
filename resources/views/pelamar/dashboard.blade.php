@@ -44,7 +44,7 @@
         <div class="row g-3 mb-5 mt-2">
             <div class="col-lg-4 col-sm-6">
                 <div class="stat-card h-100">
-                    <div class="stat-icon" style="background:rgba(13,110,253,0.08);color:#751e18;">
+                    <div class="stat-icon" style="background:rgba(13,110,253,0.08);color:#1e3a8a;">
                         <i class="material-icons">history</i>
                     </div>
                     <div>
@@ -524,12 +524,12 @@
 
     /* Bungkus highlight border ke seluruh row pakai outline trick */
     .lamaran-row:hover td:first-child {
-        border-left: 2px solid var(--primary-theme, #751e18) !important;
+        border-left: 2px solid var(--primary-theme, #1e3a8a) !important;
         border-radius: 12px 0 0 12px;
     }
 
     .lamaran-row:hover td:last-child {
-        border-right: 2px solid var(--primary-theme, #751e18) !important;
+        border-right: 2px solid var(--primary-theme, #1e3a8a) !important;
         border-radius: 0 12px 12px 0;
     }
 
@@ -545,7 +545,7 @@
     }
 
     .lamaran-card:hover {
-        border-color: var(--primary-theme, #751e18) !important;
+        border-color: var(--primary-theme, #1e3a8a) !important;
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
     }
@@ -558,7 +558,7 @@
     }
 
     .wishlist-card:hover {
-        border-color: var(--primary-theme, #751e18) !important;
+        border-color: var(--primary-theme, #1e3a8a) !important;
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
     }

@@ -58,6 +58,7 @@ Route::middleware('auth')->group(function () {
     // Applicant Dashboard & Activities
     Route::get('/pelamar/dashboard', [\App\Http\Controllers\Pelamar\DashboardController::class, 'index'])->name('pelamar.dashboard');
     Route::get('rekomendasi', [RekomendasiController::class, 'getRekomendasi'])->name('pelamar.rekomendasi');
+    Route::get('rekomendasi-serupa', [RekomendasiController::class, 'getRekomendasiSerupa'])->name('pelamar.rekomendasi.serupa');
     Route::post('/apply-job', [\App\Http\Controllers\Pelamar\ApplyController::class, 'apply'])->name('pelamar.apply-job');
     Route::post('/wishlist/toggle', [\App\Http\Controllers\Pelamar\WishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::get('/pelamar/absen/{id}', [AbsensiController::class, 'scanAbsen'])->name('pelamar.absen');

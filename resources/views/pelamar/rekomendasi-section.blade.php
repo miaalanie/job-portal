@@ -11,7 +11,7 @@
                     id="tab-sesuai" data-bs-toggle="tab" data-bs-target="#pane-sesuai"
                     type="button" role="tab" onclick="loadTabRekomendasi('sesuai')">
                     Sesuai Profilmu
-                    <span id="badge-sesuai" class="badge ms-1 fs-10" style="background-color: #751e18;">
+                    <span id="badge-sesuai" class="badge ms-1 fs-10" style="background-color: #1e3a8a;">
                         <span class="spinner-border spinner-border-sm" style="width:8px;height:8px;"></span>
                     </span>
                 </button>
@@ -21,7 +21,7 @@
                     id="tab-serupa" data-bs-toggle="tab" data-bs-target="#pane-serupa"
                     type="button" role="tab" onclick="loadTabRekomendasi('serupa')">
                     Orang Serupa Melamar
-                    <span id="badge-serupa" class="badge ms-1 fs-10" style="background-color: #751e18;">-</span>
+                    <span id="badge-serupa" class="badge ms-1 fs-10" style="background-color: #1e3a8a;">-</span>
                 </button>
             </li>
         </ul>
@@ -126,8 +126,8 @@
     /* ✅ Hover: putih bersih, shadow lembut, border tipis biru */
     .job-recommend-card:hover {
         background: #ffffff;
-        border-color: #751e18;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        border-color: #1e3a8a;
+        box-shadow: 0 4px 18px rgba(30, 58, 138, 0.12);
         color: inherit !important;
         transform: translateY(-2px);
         /* naik dikit aja, bukan geser kanan */
@@ -213,7 +213,7 @@
     }
 
     .bg-maroon {
-        background-color: #751e18 !important;
+        background-color: #1e3a8a !important;
         color: #fff !important;
     }
 </style>
@@ -246,7 +246,7 @@
 
         const routes = {
             sesuai: '{{ route("pelamar.rekomendasi") }}',
-            serupa: '{{ route("pelamar.rekomendasi") }}'
+            serupa: '{{ route("pelamar.rekomendasi.serupa") }}'
         };
 
         showEl('skeleton-' + tab);
@@ -295,9 +295,9 @@
 
     function renderTabCards(tab, items) {
         const el = document.getElementById('list-' + tab);
-        // ✅ row g-3, tiap card col-12 col-md-4 → 3 kolom, no scroll
+        const builder = (tab === 'serupa') ? buildCardCF : buildCard;
         el.innerHTML = '<div class="row g-3">' +
-            items.map(item => '<div class="col-12 col-md-4">' + buildCard(item) + '</div>').join('') +
+            items.map(item => '<div class="col-12 col-md-4">' + builder(item) + '</div>').join('') +
             '</div>';
     }
 
@@ -341,6 +341,44 @@
             '<div class="text-muted" style="font-size:11px;">' + esc(job.kategori) + '</div>' +
             gajiHtml +
             (tagsHtml ? '<div class="d-flex flex-wrap gap-1 mt-2">' + tagsHtml + '</div>' : '') +
+            '</div>' +
+            '</div>' +
+            '</a>';
+    }
+
+    function buildCardCF(job) {
+        const logoHtml = job.perusahaan_logo ?
+            '<img src="/storage/' + job.perusahaan_logo + '" style="width:34px;height:34px;object-fit:contain;" loading="lazy">' :
+            '<i class="material-icons text-muted" style="font-size:22px;">business</i>';
+
+        const gajiHtml = (job.gaji_awal || job.gaji_akhir) ?
+            '<div class="d-flex align-items-center text-success fw-semibold mt-1" style="font-size:11px;"><i class="material-icons me-1" style="font-size:12px;">payments</i>' + formatGaji(job.gaji_awal, job.gaji_akhir) + '</div>' :
+            '';
+
+        const lokasiHtml = job.lokasi ?
+            '<div class="d-flex align-items-center text-muted mt-1" style="font-size:11px;"><i class="material-icons me-1" style="font-size:12px;">place</i>' + esc(job.lokasi) + '</div>' :
+            '';
+
+        const badgeText = (job.similar_count && job.similar_count > 0) ?
+            job.similar_count + ' orang serupa melamar' :
+            'Direkomendasikan';
+
+        const href = '/lowongan-detail/' + (job.encrypted_id ?? '');
+
+        return '<a href="' + href + '" class="job-recommend-card p-3 rounded-4">' +
+            '<div class="d-flex align-items-start gap-3">' +
+            '<div class="bg-light rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width:48px;height:48px;">' + logoHtml + '</div>' +
+            '<div class="flex-grow-1 min-w-0">' +
+            '<div class="d-flex align-items-start justify-content-between gap-2 mb-1">' +
+            '<h6 class="fw-bold text-dark mb-0 lh-sm" style="font-size:13px;">' + esc(job.namalowongan) + '</h6>' +
+            '<span class="badge bg-success bg-opacity-10 text-success fw-semibold rounded-pill px-2 py-1" style="font-size:10px;white-space:nowrap;">' +
+            '<i class="material-icons" style="font-size:10px;vertical-align:-1px;">check_circle</i> ' + badgeText +
+            '</span>' +
+            '</div>' +
+            '<div class="text-muted lh-sm" style="font-size:12px;">' + esc(job.perusahaan_nama ?? '-') + '</div>' +
+            '<div class="text-muted" style="font-size:11px;">' + esc(job.kategori) + '</div>' +
+            lokasiHtml +
+            gajiHtml +
             '</div>' +
             '</div>' +
             '</a>';
