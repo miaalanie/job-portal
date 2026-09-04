@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Embedding extends Model
 {
+    public const MODEL_VERSION = 'paraphrase-multilingual-MiniLM-L12-v2';
+
     public const TYPE_PELAMAR_CV = 'pelamar_cv';
     public const TYPE_PELAMAR_SKILL = 'pelamar_skill';
     public const TYPE_PELAMAR_EDUCATION = 'pelamar_education';
