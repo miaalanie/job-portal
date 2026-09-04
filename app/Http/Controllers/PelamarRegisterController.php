@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\PersistPelamarEmbeddings;
+use App\Models\Embedding;
 use App\Models\User;
 use App\Models\Pelamar;
 use App\Models\Provinsi;
@@ -165,6 +167,20 @@ class PelamarRegisterController extends Controller
 
             // Clear old Pendidikan, Pengalaman, & Skills if updating
             if ($idPelamar) {
+                Embedding::where(function ($query) use ($pelamar) {
+                    $query->where('embeddable_type', Embedding::TYPE_PELAMAR_CV)
+                        ->where('embeddable_id', $pelamar->id);
+                })->orWhere(function ($query) use ($pelamar) {
+                    $query->where('embeddable_type', Embedding::TYPE_PELAMAR_SKILL)
+                        ->whereIn('embeddable_id', $pelamar->skills()->pluck('id'));
+                })->orWhere(function ($query) use ($pelamar) {
+                    $query->where('embeddable_type', Embedding::TYPE_PELAMAR_EDUCATION)
+                        ->whereIn('embeddable_id', $pelamar->pendidikans()->pluck('id'));
+                })->orWhere(function ($query) use ($pelamar) {
+                    $query->where('embeddable_type', Embedding::TYPE_PELAMAR_PENGALAMAN)
+                        ->whereIn('embeddable_id', $pelamar->pengalamans()->pluck('id'));
+                })->delete();
+
                 $pelamar->pendidikans()->delete();
                 $pelamar->pengalamans()->delete();
                 $pelamar->skills()->delete();
@@ -253,6 +269,9 @@ class PelamarRegisterController extends Controller
             auth()->user()->update(['idpelamar' => $pelamar->id]);
 
             DB::commit();
+
+            // Tidak menghambat respons pengguna; job memuat ulang relasi setelah commit.
+            PersistPelamarEmbeddings::dispatch($pelamar->id)->afterCommit();
 
             return response()->json([
                 'status' => 'success',

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\PersistLowonganEmbeddings;
+use App\Models\Embedding;
 use App\Models\Register;
 use App\Models\Lowongan;
 use App\Models\Kategorilowongan;
@@ -14,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PerusahaanLokerController extends Controller
@@ -121,6 +124,8 @@ class PerusahaanLokerController extends Controller
             $gaji_awal = $request->gaji_awal ? preg_replace('/[^0-9]/', '', $request->gaji_awal) : null;
             $gaji_akhir = $request->gaji_akhir ? preg_replace('/[^0-9]/', '', $request->gaji_akhir) : null;
 
+            DB::beginTransaction();
+
             // 1. Buat data Lowongan Utama
             $loker = Lowongan::create([
                 'idregister' => $decryptedId,
@@ -178,8 +183,15 @@ class PerusahaanLokerController extends Controller
                 }
             }
 
+            DB::afterCommit(fn () => PersistLowonganEmbeddings::dispatch($loker->id));
+            DB::commit();
+
             return redirect()->route('admin.perusahaan.event.my-detail', $id)->with('success', 'Lowongan berhasil dipublikasikan.');
         } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
             return redirect()->back()->with('error', 'Gagal menyimpan lowongan: ' . $e->getMessage())->withInput();
         }
     }
@@ -196,6 +208,7 @@ class PerusahaanLokerController extends Controller
                 abort(403);
             }
 
+            DB::beginTransaction();
             $count = 0;
             foreach ($request->selected_lokers as $lokerId) {
                 $pastLoker = Lowongan::findOrFail($lokerId);
@@ -203,7 +216,7 @@ class PerusahaanLokerController extends Controller
                 // Double check ownership
                 if ($pastLoker->register->idperusahaan != Auth::user()->idperusahaan) continue;
 
-                Lowongan::create([
+                $newLoker = Lowongan::create([
                     'idregister' => $decryptedId,
                     'namalowongan' => $pastLoker->namalowongan,
                     'idkategorilowongan' => $pastLoker->idkategorilowongan,
@@ -212,14 +225,35 @@ class PerusahaanLokerController extends Controller
                     'kuota' => $pastLoker->kuota,
                     'gaji_awal' => $pastLoker->gaji_awal,
                     'gaji_akhir' => $pastLoker->gaji_akhir,
+                    'minimal_pendidikan' => $pastLoker->minimal_pendidikan,
+                    'minimal_pengalaman_bulan' => $pastLoker->minimal_pengalaman_bulan,
+                    'preferensi_gender' => $pastLoker->preferensi_gender,
+                    'usia_min' => $pastLoker->usia_min,
+                    'usia_max' => $pastLoker->usia_max,
                     'status' => 1,
                     'useradd' => Auth::id(),
                 ]);
+
+                foreach ($pastLoker->skills as $skill) {
+                    $newLoker->skills()->create(['idskill' => $skill->idskill]);
+                }
+
+                foreach ($pastLoker->jurusans as $jurusan) {
+                    $newLoker->jurusans()->create(['idjurusan' => $jurusan->idjurusan]);
+                }
+
+                DB::afterCommit(fn () => PersistLowonganEmbeddings::dispatch($newLoker->id));
                 $count++;
             }
 
+            DB::commit();
+
             return redirect()->route('admin.perusahaan.event.my-detail', $id)->with('success', "$count lowongan berhasil diimpor dari event sebelumnya.");
         } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
             return redirect()->back()->with('error', 'Gagal mengimpor lowongan.');
         }
     }
@@ -295,6 +329,8 @@ class PerusahaanLokerController extends Controller
             $gaji_awal = $request->gaji_awal ? preg_replace('/[^0-9]/', '', $request->gaji_awal) : null;
             $gaji_akhir = $request->gaji_akhir ? preg_replace('/[^0-9]/', '', $request->gaji_akhir) : null;
 
+            DB::beginTransaction();
+
             $loker->update([
                 'namalowongan' => $request->namalowongan,
                 'idkategorilowongan' => $request->idkategorilowongan,
@@ -331,6 +367,12 @@ class PerusahaanLokerController extends Controller
             }
 
             // Hapus skill lama yang tidak dipilih lagi oleh user
+            $staleSkillEmbeddingIds = $loker->skills()
+                ->whereNotIn('idskill', $skillIds)
+                ->pluck('id');
+            Embedding::where('embeddable_type', Embedding::TYPE_LOWONGAN_SKILL)
+                ->whereIn('embeddable_id', $staleSkillEmbeddingIds)
+                ->delete();
             $loker->skills()->whereNotIn('idskill', $skillIds)->delete();
 
             // Tambahkan atau pastikan skill yang dipilih terdaftar di lowongan ini
@@ -358,6 +400,12 @@ class PerusahaanLokerController extends Controller
             }
 
             // Hapus jurusan lama yang tidak dipilih lagi oleh user
+            $staleJurusanEmbeddingIds = $loker->jurusans()
+                ->whereNotIn('idjurusan', $jurusanIds)
+                ->pluck('id');
+            Embedding::where('embeddable_type', Embedding::TYPE_LOWONGAN_EDUCATION)
+                ->whereIn('embeddable_id', $staleJurusanEmbeddingIds)
+                ->delete();
             $loker->jurusans()->whereNotIn('idjurusan', $jurusanIds)->delete();
 
             // Tambahkan atau pastikan jurusan yang dipilih terdaftar di lowongan ini
@@ -367,8 +415,15 @@ class PerusahaanLokerController extends Controller
                 );
             }
 
+            DB::afterCommit(fn () => PersistLowonganEmbeddings::dispatch($loker->id));
+            DB::commit();
+
             return redirect()->route('admin.perusahaan.event.my-detail', encrypt($loker->idregister))->with('success', 'Lowongan berhasil diperbarui.');
         } catch (\Exception $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
             return redirect()->back()->with('error', 'Gagal memperbarui lowongan: ' . $e->getMessage())->withInput();
         }
     }

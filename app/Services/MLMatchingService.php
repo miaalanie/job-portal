@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Embedding;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -69,7 +70,97 @@ class  MLMatchingService
         }
     }
 
-    private function buildPelamarPayload($pelamar): array
+    /**
+     * Generates all applicant vectors in the ML service and persists them locally.
+     * This is intended for queued execution after the profile transaction commits.
+     */
+    public function persistPelamarEmbeddings($pelamar): void
+    {
+        $response = Http::timeout($this->timeout)
+            ->post("{$this->baseUrl}/embeddings/pelamar", [
+                'pelamar' => $this->buildPelamarPayload($pelamar, true),
+            ]);
+
+        if ($response->failed()) {
+            Log::error('ML Service applicant embedding error', [
+                'pelamar_id' => $pelamar->id,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new \RuntimeException('ML service gagal membuat embedding pelamar.');
+        }
+
+        $result = $response->json();
+
+        if (empty($result['success']) || empty($result['embeddings'])) {
+            throw new \RuntimeException('ML service mengembalikan hasil embedding pelamar yang tidak valid.');
+        }
+
+        $modelVersion = $result['model_version'] ?? 'paraphrase-multilingual-MiniLM-L12-v2';
+
+        foreach ($result['embeddings'] as $item) {
+            Embedding::updateOrCreate(
+                [
+                    'embeddable_type' => $item['embeddable_type'],
+                    'embeddable_id' => $item['embeddable_id'],
+                    'model_version' => $modelVersion,
+                ],
+                [
+                    'vector' => $item['vector'],
+                    'source_hash' => hash('sha256', $item['source_text']),
+                    'status' => Embedding::STATUS_DONE,
+                ]
+            );
+        }
+
+    }
+
+    /**
+     * Generates all vacancy vectors in the ML service and persists them locally.
+     */
+    public function persistLowonganEmbeddings($lowongan): void
+    {
+        $response = Http::timeout($this->timeout)
+            ->post("{$this->baseUrl}/embeddings/lowongan", [
+                'lowongan' => $this->buildLowonganPayload($lowongan, true),
+            ]);
+
+        if ($response->failed()) {
+            Log::error('ML Service vacancy embedding error', [
+                'lowongan_id' => $lowongan->id,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new \RuntimeException('ML service gagal membuat embedding lowongan.');
+        }
+
+        $result = $response->json();
+
+        if (empty($result['success']) || empty($result['embeddings'])) {
+            throw new \RuntimeException('ML service mengembalikan hasil embedding lowongan yang tidak valid.');
+        }
+
+        $modelVersion = $result['model_version'] ?? 'paraphrase-multilingual-MiniLM-L12-v2';
+
+        foreach ($result['embeddings'] as $item) {
+            Embedding::updateOrCreate(
+                [
+                    'embeddable_type' => $item['embeddable_type'],
+                    'embeddable_id' => $item['embeddable_id'],
+                    'model_version' => $modelVersion,
+                ],
+                [
+                    'vector' => $item['vector'],
+                    'source_hash' => hash('sha256', $item['source_text']),
+                    'status' => Embedding::STATUS_DONE,
+                ]
+            );
+        }
+    }
+
+    private function buildPelamarPayload($pelamar, bool $includeRelationIds = false): array
     {
         return [
             'id'            => $pelamar->id,
@@ -78,32 +169,35 @@ class  MLMatchingService
             'tanggallahir'  => $pelamar->tanggallahir,
             'jeniskelamin'  => $pelamar->jeniskelamin,
 
-            'skills' => $pelamar->skills->map(fn($s) => [
+            'skills' => $pelamar->skills->map(fn($s) => array_filter([
+                'id'         => $includeRelationIds ? $s->id : null,
                 'namaskill'  => $s->namaskill,
                 'keterangan' => $s->keterangan,
-            ])->toArray(),
+            ], fn ($value) => $value !== null))->toArray(),
 
-            'pendidikans' => $pelamar->pendidikans->map(fn($p) => [
+            'pendidikans' => $pelamar->pendidikans->map(fn($p) => array_filter([
+                'id'           => $includeRelationIds ? $p->id : null,
                 'kategori'     => $p->kategori,
                 'jurusan'      => $p->jurusan,
                 'tahunawal'    => (int) $p->tahunawal,
                 'tahunselesai' => $p->tahunselesai ? (int) $p->tahunselesai : null,
-            ])->toArray(),
+            ], fn ($value) => $value !== null))->toArray(),
 
-            'pengalamans' => $pelamar->pengalamans->map(fn($e) => [
+            'pengalamans' => $pelamar->pengalamans->map(fn($e) => array_filter([
+                'id'           => $includeRelationIds ? $e->id : null,
                 'posisi'       => $e->posisi,
                 'bulanawal'    => (int) $e->bulanawal,
                 'tahunawal'    => (int) $e->tahunawal,
                 'bulanselesai' => (int) $e->bulanselesai,
                 'tahunselesai' => $e->tahunselesai ? (int) $e->tahunselesai : null,
                 'aktif'        => (int) $e->aktif,
-            ])->toArray(),
+            ], fn ($value) => $value !== null))->toArray(),
 
             'total_pengalaman_bulan' => $this->hitungTotalPengalaman($pelamar->pengalamans),
         ];
     }
 
-    private function buildLowonganPayload($lowongan): array
+    private function buildLowonganPayload($lowongan, bool $useRelationIds = false): array
     {
         return [
             'id'             => $lowongan->id,
@@ -133,13 +227,13 @@ class  MLMatchingService
 
             // hasMany ke LowonganSkill → perlu ->skill untuk ke MasterSkill
             'skills' => $lowongan->skills->map(fn($ls) => [
-                'id'   => $ls->skill->id,
+                'id'   => $useRelationIds ? $ls->id : $ls->skill->id,
                 'nama' => $ls->skill->namaskill,
             ])->toArray(),
 
             // hasMany ke LowonganJurusan → perlu ->jurusan untuk ke MasterJurusan
             'jurusans' => $lowongan->jurusans->map(fn($lj) => [
-                'id'   => $lj->jurusan->id,
+                'id'   => $useRelationIds ? $lj->id : $lj->jurusan->id,
                 'nama' => $lj->jurusan->namajurusan,
             ])->toArray(),
 
