@@ -84,6 +84,39 @@
     </div>
 </div>
 
+{{-- Modal: Kelola Status Lamaran --}}
+<div class="modal fade" id="applicantStatusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 px-5 pt-5 pb-2">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-1">Kelola Status Lamaran</h5>
+                    <div class="text-muted fs-7" id="statusModalApplicant"></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-5">
+                <div class="alert alert-light-warning d-flex gap-3 align-items-start">
+                    <i class="material-icons text-warning">warning_amber</i>
+                    <div class="fs-7">Keputusan ini penting dan akan tersimpan sebagai status resmi lamaran. Pelamar dapat melihat perubahan ini di dashboard mereka.</div>
+                </div>
+                <div class="mb-4"><div class="text-muted fs-8 mb-1">Status saat ini</div><div class="fw-bold fs-5" id="statusModalCurrent"></div></div>
+                <div class="text-muted fs-8 mb-2">Pilih keputusan baru</div>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-light-success text-start status-choice" data-status="1"><i class="material-icons align-middle me-2">check_circle</i><strong>Diterima</strong><span class="d-block ms-4 fs-8">Pelamar dinyatakan lolos untuk lowongan ini.</span></button>
+                    <button type="button" class="btn btn-light-danger text-start status-choice" data-status="2"><i class="material-icons align-middle me-2">cancel</i><strong>Ditolak</strong><span class="d-block ms-4 fs-8">Pelamar dinyatakan tidak lolos untuk lowongan ini.</span></button>
+                    <button type="button" class="btn btn-light-warning text-start status-choice d-none" data-status="0" id="resetStatusChoice"><i class="material-icons align-middle me-2">restart_alt</i><strong>Kembalikan ke Menunggu</strong><span class="d-block ms-4 fs-8">Batalkan keputusan dan tinjau kembali nanti.</span></button>
+                </div>
+                <div id="statusModalConfirmation" class="alert alert-primary d-none mt-4 mb-0 fs-7"></div>
+            </div>
+            <div class="modal-footer border-0 px-5 pb-5 pt-2">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="confirmApplicantStatus" disabled><i class="material-icons fs-5 me-1">check</i>Konfirmasi Keputusan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('styles')
 <style>
     @keyframes shimmer {
@@ -114,6 +147,9 @@
     let _kategorilokasi = '';
     let _currentPage = 1;
     const PER_PAGE = 10;
+    const APPLICANT_STATUS_URL = '{{ route("admin.perusahaan.loker.applicant-status", encrypt($loker->id)) }}';
+    let _selectedStatusApplicant = null;
+    let _selectedApplicantStatus = null;
 
     // ─── Load (sama seperti sebelumnya, tapi simpan ke state) ────────────────────
     async function loadApplicantsTable() {
@@ -373,6 +409,9 @@
             '<i class="material-icons fs-5">visibility</i></a>' :
             '';
 
+        const statusActions = '<button type="button" class="btn btn-icon btn-light-warning btn-sm applicant-status-btn" data-lamaran-id="' + l.id + '" title="Kelola status lamaran">' +
+            '<i class="material-icons fs-5">rule</i></button>';
+
         return '<tr>' +
             '<td class="ps-4"><div class="d-flex align-items-center">' +
             '<div class="symbol symbol-45px me-5">' + avatar + '</div>' +
@@ -386,8 +425,73 @@
             '<td>' + tanggalDatang + '</td>' +
             '<td>' + status + '</td>' +
             kecocokan +
-            '<td class="text-end pe-4">' + cvBtn + '</td>' +
+            '<td class="text-end pe-4"><div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">' + cvBtn + statusActions + '</div></td>' +
             '</tr>';
+    }
+
+    const statusLabels = { 0: 'Menunggu', 1: 'Diterima', 2: 'Ditolak' };
+
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.applicant-status-btn');
+        if (!button) return;
+        const applicant = _allLamarans.find(item => Number(item.id) === Number(button.dataset.lamaranId));
+        if (!applicant) return;
+
+        _selectedStatusApplicant = applicant;
+        _selectedApplicantStatus = null;
+        document.getElementById('statusModalApplicant').textContent = applicant.namalengkap;
+        document.getElementById('statusModalCurrent').textContent = statusLabels[applicant.statusditerima] ?? 'Menunggu';
+        document.getElementById('statusModalConfirmation').classList.add('d-none');
+        document.getElementById('confirmApplicantStatus').disabled = true;
+
+        const isWaiting = Number(applicant.statusditerima) === 0;
+        document.querySelectorAll('.status-choice[data-status="1"], .status-choice[data-status="2"]')
+            .forEach(choice => choice.classList.toggle('d-none', !isWaiting));
+        document.getElementById('resetStatusChoice').classList.toggle('d-none', isWaiting);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('applicantStatusModal')).show();
+    });
+
+    document.querySelectorAll('.status-choice').forEach(button => {
+        button.addEventListener('click', function() {
+            _selectedApplicantStatus = Number(this.dataset.status);
+            const confirmation = document.getElementById('statusModalConfirmation');
+            confirmation.textContent = 'Anda akan mengubah status menjadi "' + statusLabels[_selectedApplicantStatus] + '". Pastikan keputusan ini sudah benar.';
+            confirmation.classList.remove('d-none');
+            document.getElementById('confirmApplicantStatus').disabled = false;
+        });
+    });
+
+    document.getElementById('confirmApplicantStatus').addEventListener('click', function() {
+        if (!_selectedStatusApplicant || _selectedApplicantStatus === null) return;
+        updateApplicantStatus(_selectedStatusApplicant.id, _selectedApplicantStatus, this);
+    });
+
+    async function updateApplicantStatus(lamaranId, status, button) {
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+
+        try {
+            const response = await fetch(APPLICANT_STATUS_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? ''
+                },
+                body: JSON.stringify({ lamaran_id: lamaranId, statusditerima: status })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message ?? 'Gagal memperbarui status.');
+
+            const lamaran = _allLamarans.find(item => Number(item.id) === Number(lamaranId));
+            if (lamaran) lamaran.statusditerima = status;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('applicantStatusModal')).hide();
+            renderPage();
+        } catch (error) {
+            button.disabled = false;
+            button.innerHTML = '<i class="material-icons fs-5 me-1">check</i>Konfirmasi Keputusan';
+            alert(error.message);
+        }
     }
 
     // ─── Modal ranking detail ─────────────────────────────────────────────────────

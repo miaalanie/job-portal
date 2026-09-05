@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             KategoriSeeder::class,
             WilayahSeeder::class,
             PerusahaanMenuSeeder::class,
+            RecommendationMenuSeeder::class,
         ]);
     }
 }

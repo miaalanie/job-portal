@@ -141,8 +141,8 @@
                             $evenDate = \Carbon\Carbon::parse($app->even->tanggalawal);
                             $isToday = now()->isSameDay($evenDate);
                             $diff = round(now()->diffInDays($evenDate, false));
-                            $statusText = $isHadir ? 'Hadir' : match($app->statusditerima) { '0'=>'Melamar','2'=>'Wawancara','3'=>'Diterima',default=>'Pending' };
-                            $statusClass = $isHadir ? 'bg-success' : match($app->statusditerima) { '0'=>'bg-secondary','2'=>'bg-primary','3'=>'bg-success',default=>'bg-secondary' };
+                            $statusText = $isHadir ? 'Hadir' : match((int) $app->statusditerima) { 0=>'Menunggu', 1=>'Diterima', 2=>'Ditolak', default=>'Menunggu' };
+                            $statusClass = $isHadir ? 'bg-success' : match((int) $app->statusditerima) { 0=>'bg-warning', 1=>'bg-success', 2=>'bg-danger', default=>'bg-warning' };
                             @endphp
                             <a href="{{ route('vacancy.detail', encrypt($app->lowongan->id)) }}"
                                 class="lamaran-card text-decoration-none text-dark p-3 rounded-4 border d-block{{ $i >= 3 ? ' d-none lamaran-extra' : '' }}">
@@ -205,8 +205,8 @@
                                     $evenDate = \Carbon\Carbon::parse($app->even->tanggalawal);
                                     $isToday = now()->isSameDay($evenDate);
                                     $diff = round(now()->diffInDays($evenDate, false));
-                                    $statusText = $isHadir ? 'Hadir' : match($app->statusditerima) { '0'=>'Melamar','2'=>'Wawancara','3'=>'Diterima',default=>'Pending' };
-                                    $statusClass = $isHadir ? 'bg-success' : match($app->statusditerima) { '0'=>'bg-secondary','2'=>'bg-primary','3'=>'bg-success',default=>'bg-secondary' };
+                                    $statusText = $isHadir ? 'Hadir' : match((int) $app->statusditerima) { 0=>'Menunggu', 1=>'Diterima', 2=>'Ditolak', default=>'Menunggu' };
+                                    $statusClass = $isHadir ? 'bg-success' : match((int) $app->statusditerima) { 0=>'bg-warning', 1=>'bg-success', 2=>'bg-danger', default=>'bg-warning' };
                                     @endphp
                                     <tr class="lamaran-row{{ $i >= 3 ? ' d-none lamaran-extra' : '' }}"
                                         onclick="window.location='{{ route('vacancy.detail', encrypt($app->lowongan->id)) }}'"

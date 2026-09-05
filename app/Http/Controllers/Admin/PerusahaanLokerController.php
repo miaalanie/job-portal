@@ -453,6 +453,58 @@ class PerusahaanLokerController extends Controller
         }
     }
 
+    public function updateApplicantStatus(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'lamaran_id' => ['required', 'integer'],
+            'statusditerima' => ['required', 'integer', 'in:0,1,2'],
+        ]);
+
+        try {
+            $decryptedId = Crypt::decrypt($id);
+            $loker = Lowongan::with('register')->findOrFail($decryptedId);
+
+            if ($loker->register->idperusahaan != Auth::user()->idperusahaan) {
+                return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses ke lowongan ini.'], 403);
+            }
+
+            $lamaran = $loker->lamarans()
+                ->with('pelamar.user')
+                ->findOrFail($request->integer('lamaran_id'));
+            $status = $request->integer('statusditerima');
+
+            $lamaran->update([
+                'statusditerima' => $status,
+                'userupdate' => Auth::id(),
+            ]);
+
+            if ($lamaran->pelamar?->user) {
+                $statusLabel = [0 => 'Menunggu', 1 => 'Diterima', 2 => 'Ditolak'][$status];
+                DB::table('system_notifications')->insert([
+                    'user_id' => $lamaran->pelamar->user->id,
+                    'type' => 'status_lamaran',
+                    'title' => 'Status Lamaran Diperbarui',
+                    'message' => "Lamaran Anda untuk posisi {$loker->namalowongan} sekarang berstatus {$statusLabel}.",
+                    'url' => route('pelamar.dashboard'),
+                    'is_read' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'statusditerima' => $status,
+                'message' => 'Status lamaran berhasil diperbarui.',
+            ]);
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            return response()->json(['success' => false, 'message' => 'ID lowongan tidak valid.'], 422);
+        } catch (\Throwable $e) {
+            Log::error('updateApplicantStatus error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Status lamaran gagal diperbarui.'], 500);
+        }
+    }
+
     public function loadApplicantsRanking($id): JsonResponse
     {
         try {
@@ -491,6 +543,7 @@ class PerusahaanLokerController extends Controller
                     $rankData = $rankedApplicants->get($pelamar?->id ?? 0);
 
                     return [
+                        'id'                  => $lamaran->id,
                         'namalengkap'         => $pelamar?->namalengkap ?? 'Tidak Ada Data',
                         'foto_url'            => $pelamar?->foto ? asset('storage/' . $pelamar->foto) : null,
                         'alamatlengkap'       => $pelamar?->alamatlengkap ?? '-',

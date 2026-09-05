@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Embedding;
+use App\Models\RecommendationSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -24,6 +25,7 @@ class  MLMatchingService
             $payload = [
                 'pelamar'   => $this->buildPelamarPayload($pelamar, false, true),
                 'lowongans' => $this->buildLowongansPayload($lowongans, true),
+                'scoring_config' => RecommendationSetting::current()->toMlConfig(),
             ];
             $response = Http::timeout($this->timeout)
                 ->post("{$this->baseUrl}/match", $payload);
@@ -413,6 +415,7 @@ class  MLMatchingService
     {
         return [
             'lowongan' => $this->buildLowonganPayload($loker, false, true),
+            'scoring_config' => RecommendationSetting::current()->toMlConfig(),
 
             'pelamars' => $loker->lamarans
                 ->filter(fn($l) => $l->pelamar !== null)
@@ -433,6 +436,26 @@ class  MLMatchingService
             return $response->successful();
         } catch (\Exception $e) {
             return false;
+        }
+    }
+
+    public function healthDetails(): array
+    {
+        try {
+            $response = Http::timeout(5)->get("{$this->baseUrl}/health/detailed");
+            return [
+                'reachable' => $response->successful(),
+                'status' => $response->status(),
+                'data' => $response->json() ?: [],
+                'error' => $response->successful() ? null : $response->body(),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'reachable' => false,
+                'status' => null,
+                'data' => [],
+                'error' => $e->getMessage(),
+            ];
         }
     }
 }

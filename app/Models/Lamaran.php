@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Lamaran extends Model
 {
+    public const STATUS_MENUNGGU = 0;
+    public const STATUS_DITERIMA = 1;
+    public const STATUS_DITOLAK = 2;
+
     protected $fillable = [
         'idpelamar', 
         'idlowongan', 
@@ -16,6 +20,10 @@ class Lamaran extends Model
         'statusditerima', 
         'useradd', 
         'userupdate'
+    ];
+
+    protected $casts = [
+        'statusditerima' => 'integer',
     ];
 
     public function sesi()

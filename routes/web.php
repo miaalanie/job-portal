@@ -37,6 +37,7 @@ Route::get('lang/{locale}', function ($locale) {
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pelamar\RekomendasiController;
 use App\Http\Controllers\PerusahaanRegisterController;
+use App\Http\Controllers\Admin\RecommendationController;
 
 // Company Registration
 Route::get('/register-perusahaan', [PerusahaanRegisterController::class, 'showRegistrationForm'])->name('perusahaan.register');
@@ -172,6 +173,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/perusahaan/loker/{id}/edit', [PerusahaanLokerController::class, 'edit'])->name('admin.perusahaan.loker.edit');
     Route::post('/perusahaan/loker/{id}/update', [PerusahaanLokerController::class, 'update'])->name('admin.perusahaan.loker.update');
     Route::get('/perusahaan/loker/{id}/applicants', [PerusahaanLokerController::class, 'showApplicants'])->name('admin.perusahaan.loker.applicants');
+    Route::post('/perusahaan/loker/{id}/applicant-status', [PerusahaanLokerController::class, 'updateApplicantStatus'])->name('admin.perusahaan.loker.applicant-status');
     Route::get('/perusahaan/loker/{id}/applicants-ranking', [PerusahaanLokerController::class, 'loadApplicantsRanking'])->name('admin.perusahaan.loker.applicants-ranking');
     Route::get('/perusahaan/loker/{id}/attendance', [PerusahaanLokerController::class, 'attendance'])->name('admin.perusahaan.loker.attendance');
     Route::post('/perusahaan/loker/{id}/attendance', [PerusahaanLokerController::class, 'updateAttendance'])->name('admin.perusahaan.loker.attendance.update');
@@ -222,6 +224,12 @@ Route::middleware('auth')->prefix('admin')->group(function () {
 
     Route::get('/role-menu', [AksesMenuController::class, 'index'])->name('admin.role-menu');
     Route::post('/role-menu', [AksesMenuController::class, 'store'])->name('admin.role-menu.store');
+
+    Route::get('/rekomendasi/pengaturan', [RecommendationController::class, 'settings'])->name('admin.recommendation.settings');
+    Route::put('/rekomendasi/pengaturan', [RecommendationController::class, 'updateSettings'])->name('admin.recommendation.settings.update');
+    Route::get('/rekomendasi/health', [RecommendationController::class, 'health'])->name('admin.recommendation.health');
+    Route::get('/rekomendasi/evaluasi', [RecommendationController::class, 'evaluation'])->name('admin.recommendation.evaluation');
+    Route::post('/rekomendasi/evaluasi/run', [RecommendationController::class, 'runEvaluation'])->name('admin.recommendation.evaluation.run');
 
     Route::get('/event', [EvenController::class, 'index'])->name('admin.event');
     Route::post('event/{id}/approve', [EvenController::class, 'approve'])->name('admin.event.approve');

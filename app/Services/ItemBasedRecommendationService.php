@@ -16,6 +16,21 @@ class ItemBasedRecommendationService
         $log->info("========== REKOMENDASI CF | Pelamar #{$idPelamar} ==========");
 
         $userItems = $this->getUserItems($idPelamar);
+        return $this->recommendFromItems($idPelamar, $userItems, $limit, $log);
+    }
+
+    /**
+     * Replays CF with a supplied training history for offline evaluation.
+     * The held-out items are deliberately absent from this history.
+     */
+    public function recommendForEvaluation(int $idPelamar, array $trainingItems, int $limit = 10): Collection
+    {
+        $log = Log::channel('rekomendasi_cf');
+        return $this->recommendFromItems($idPelamar, collect($trainingItems), $limit, $log);
+    }
+
+    private function recommendFromItems(int $idPelamar, Collection $userItems, int $limit, $log): Collection
+    {
         $log->info("Item milik pelamar: [" . $userItems->implode(', ') . "]");
 
         if ($userItems->isEmpty()) {

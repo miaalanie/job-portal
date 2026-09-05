@@ -60,7 +60,7 @@ class ApplyController extends Controller
                 'idsesi' => ($event->status_sesi == 1) ? ($request->idsesi ?? 0) : 0,
                 'tanggal_datang' => $request->tanggal_datang,
                 'tanggalmelamar' => now()->toDateString(),
-                'statusditerima' => '0',
+                'statusditerima' => Lamaran::STATUS_MENUNGGU,
                 'useradd' => $user->id
             ]);
 
