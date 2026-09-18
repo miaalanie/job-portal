@@ -14,7 +14,7 @@ class  MLMatchingService
 
     public function __construct()
     {
-        $this->baseUrl = config('services.ml.url', 'http://localhost:8001');
+        $this->baseUrl = config('services.ml.url') ?: env('ML_SERVICE_URL', 'http://localhost:8001');
         $this->timeout = config('services.ml.timeout', 60);
     }
 
@@ -79,6 +79,17 @@ class  MLMatchingService
      */
     public function persistPelamarEmbeddings($pelamar): void
     {
+
+        $payload = [
+            'pelamar' => $this->buildPelamarPayload($pelamar, true),
+        ];
+
+        // catat apa yg dikirim ke ML servicenya
+        Log::info('==== MENGIRIM REQUEST KE ML SERVICE ====', [
+            'endpoint' => "{$this->baseUrl}/embeddings/pelamar",
+            'payload' => $payload
+        ]);
+
         $response = Http::timeout($this->timeout)
             ->post("{$this->baseUrl}/embeddings/pelamar", [
                 'pelamar' => $this->buildPelamarPayload($pelamar, true),
@@ -95,6 +106,21 @@ class  MLMatchingService
         }
 
         $result = $response->json();
+
+        // catat apa yg diterima dari ml service (text processing + embedding hasilnya)
+        Log::info('==== RESPON DITERIMA DARI ML SERVICE ====', [
+            'model version' => $result['model_version'] ?? null,
+            'total_record' => count($result['embeddings'] ?? []),
+            'embeddings' => collect($result['embeddings'] ?? [])->map(function ($item) {
+                return [
+                    'embeddable_type' => $item['embeddable_type'],
+                    'embeddable_id' => $item['embeddable_id'],
+                    'source_text' => $item['source_text'],
+                    'vector_preview' => array_slice($item['vector'], 0, 5),
+                    'vector_dim' => count($item['vector']),
+                ];
+            }),
+        ]);
 
         if (empty($result['success']) || empty($result['embeddings'])) {
             throw new \RuntimeException('ML service mengembalikan hasil embedding pelamar yang tidak valid.');
@@ -117,6 +143,10 @@ class  MLMatchingService
             );
         }
 
+        Log::info('==== EMBEDDING BERHASIL DISIMPAN KE DATABASE ====', [
+            'pelamar_id' => $pelamar->id,
+            'total_saved' => count($result['embeddings']),
+        ]);
     }
 
     /**
@@ -124,6 +154,17 @@ class  MLMatchingService
      */
     public function persistLowonganEmbeddings($lowongan): void
     {
+
+        $payload = [
+            'lowongan' => $this->buildLowonganPayload($lowongan, true),
+        ];
+
+        Log::info('=== [ML REQUEST] Mengirim payload lowongan ke ML service ===', [
+            'endpoint' => "{$this->baseUrl}/embeddings/lowongan",
+            'lowongan_id' => $lowongan->id,
+            'payload' => $payload,
+        ]);
+
         $response = Http::timeout($this->timeout)
             ->post("{$this->baseUrl}/embeddings/lowongan", [
                 'lowongan' => $this->buildLowonganPayload($lowongan, true),
@@ -145,6 +186,19 @@ class  MLMatchingService
             throw new \RuntimeException('ML service mengembalikan hasil embedding lowongan yang tidak valid.');
         }
 
+        Log::info('=== [ML RESPONSE] Berhasil — hasil text processing & embedding ===', [
+            'lowongan_id' => $lowongan->id,
+            'model_version' => $result['model_version'] ?? null,
+            'total_records' => count($result['embeddings']),
+            'detail' => collect($result['embeddings'])->map(fn($item) => [
+                'embeddable_type' => $item['embeddable_type'],
+                'embeddable_id' => $item['embeddable_id'],
+                'source_text' => $item['source_text'],
+                'vector_preview' => array_slice($item['vector'], 0, 5),
+                'vector_dim' => count($item['vector']),
+            ]),
+        ]);
+
         $modelVersion = $result['model_version'] ?? 'paraphrase-multilingual-MiniLM-L12-v2';
 
         foreach ($result['embeddings'] as $item) {
@@ -161,6 +215,11 @@ class  MLMatchingService
                 ]
             );
         }
+
+        Log::info('=== [DB] Embedding lowongan tersimpan ===', [
+            'lowongan_id' => $lowongan->id,
+            'total_saved' => count($result['embeddings']),
+        ]);
     }
 
     private function loadPersistedEmbeddings($pelamar, $lowongans): void
@@ -204,7 +263,7 @@ class  MLMatchingService
             }
         }
 
-        $keys = $keys->unique(fn ($key) => $key[0] . ':' . $key[1]);
+        $keys = $keys->unique(fn($key) => $key[0] . ':' . $key[1]);
         $embeddings = Embedding::query()
             ->where('model_version', Embedding::MODEL_VERSION)
             ->where('status', Embedding::STATUS_DONE)
@@ -217,7 +276,7 @@ class  MLMatchingService
                 }
             })
             ->get()
-            ->keyBy(fn ($embedding) => $embedding->embeddable_type . ':' . $embedding->embeddable_id);
+            ->keyBy(fn($embedding) => $embedding->embeddable_type . ':' . $embedding->embeddable_id);
 
         foreach ($pelamars as $item) {
             $item->embedding = $embeddings->get(Embedding::TYPE_PELAMAR_CV . ':' . $item->id)?->vector;
@@ -257,7 +316,7 @@ class  MLMatchingService
                 'namaskill'  => $s->namaskill,
                 'keterangan' => $s->keterangan,
                 'embedding'  => $includeEmbeddings ? $s->embedding : null,
-            ], fn ($value) => $value !== null))->toArray(),
+            ], fn($value) => $value !== null))->toArray(),
 
             'pendidikans' => $pelamar->pendidikans->map(fn($p) => array_filter([
                 'id'           => $includeRelationIds ? $p->id : null,
@@ -266,7 +325,7 @@ class  MLMatchingService
                 'tahunawal'    => (int) $p->tahunawal,
                 'tahunselesai' => $p->tahunselesai ? (int) $p->tahunselesai : null,
                 'embedding'    => $includeEmbeddings ? $p->embedding : null,
-            ], fn ($value) => $value !== null))->toArray(),
+            ], fn($value) => $value !== null))->toArray(),
 
             'pengalamans' => $pelamar->pengalamans->map(fn($e) => array_filter([
                 'id'           => $includeRelationIds ? $e->id : null,
@@ -277,7 +336,7 @@ class  MLMatchingService
                 'tahunselesai' => $e->tahunselesai ? (int) $e->tahunselesai : null,
                 'aktif'        => (int) $e->aktif,
                 'embedding'    => $includeEmbeddings ? $e->embedding : null,
-            ], fn ($value) => $value !== null))->toArray(),
+            ], fn($value) => $value !== null))->toArray(),
 
             'total_pengalaman_bulan' => $this->hitungTotalPengalaman($pelamar->pengalamans),
             'embedding' => $includeEmbeddings ? $pelamar->embedding : null,

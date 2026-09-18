@@ -53,7 +53,7 @@ body {
 
 .form-control-custom:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.1);
     outline: none;
 }
 
@@ -64,14 +64,14 @@ body {
     border-radius: 50px;
     padding: 16px;
     border: none;
-    box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
     transition: all 0.3s;
 }
 
 .btn-theme-login:hover {
-    background-color: #be123c;
+    background-color: #1e1261;
     transform: translateY(-2px);
-    box-shadow: 0 15px 30px -5px rgba(225, 29, 72, 0.5);
+    box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.1);
     color: white;
 }
 

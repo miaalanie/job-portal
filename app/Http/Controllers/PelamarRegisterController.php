@@ -89,7 +89,32 @@ class PelamarRegisterController extends Controller
     public function storeCompleteData(Request $request)
     {
         $user = auth()->user();
-        $idPelamar = $user->idpelamar;
+
+        if ($user?->idpelamar) {
+            return $this->updateCompleteData($request);
+        }
+
+        return $this->saveCompleteData($request, false);
+    }
+
+    public function updateCompleteData(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user?->idpelamar) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Profil pelamar belum dibuat. Silakan buat profil terlebih dahulu.',
+            ], 422);
+        }
+
+        return $this->saveCompleteData($request, true);
+    }
+
+    private function saveCompleteData(Request $request, bool $isUpdate)
+    {
+        $user = auth()->user();
+        $idPelamar = $user?->idpelamar;
 
         $request->validate([
             // Identitas
@@ -103,7 +128,7 @@ class PelamarRegisterController extends Controller
             'jeniskelamin' => 'required|in:Laki-laki,Perempuan',
             'tinggibadan' => 'nullable|integer',
             'beratbadan' => 'nullable|integer',
-            'foto_profil' => ($idPelamar ? 'nullable' : 'required') . '|image|mimes:jpg,jpeg,png|max:1024',
+            'foto_profil' => ($isUpdate ? 'nullable' : 'required') . '|image|mimes:jpg,jpeg,png|max:1024',
 
             // Pendidikan (Arrays)
             'edu_kategori.*' => 'required|string',
@@ -123,8 +148,8 @@ class PelamarRegisterController extends Controller
             'exp_bulan_akhir.*' => 'nullable|integer|min:1|max:12',
 
             // Dokumen
-            'doc_file_ktp' => ($idPelamar ? 'nullable' : 'required') . '|mimes:pdf,jpg,jpeg,png|max:2048',
-            'doc_file_kuning' => ($idPelamar ? 'nullable' : 'required') . '|mimes:pdf,jpg,jpeg,png|max:2048',
+            'doc_file_ktp' => ($isUpdate ? 'nullable' : 'required') . '|mimes:pdf,jpg,jpeg,png|max:2048',
+            'doc_file_kuning' => ($isUpdate ? 'nullable' : 'required') . '|mimes:pdf,jpg,jpeg,png|max:2048',
         ], [
             'noktp.unique' => 'Nomor KTP ini sudah terdaftar di akun lain.',
             'doc_file_ktp.required' => 'File KTP wajib diunggah.',
@@ -137,7 +162,6 @@ class PelamarRegisterController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1. Save Base Pelamar
             $pelamarData = [
                 'noktp' => $request->noktp,
                 'namalengkap' => $request->namalengkap,
@@ -165,7 +189,6 @@ class PelamarRegisterController extends Controller
                 $pelamarData
             );
 
-            // Clear old Pendidikan, Pengalaman, & Skills if updating
             if ($idPelamar) {
                 Embedding::where(function ($query) use ($pelamar) {
                     $query->where('embeddable_type', Embedding::TYPE_PELAMAR_CV)
@@ -186,7 +209,6 @@ class PelamarRegisterController extends Controller
                 $pelamar->skills()->delete();
             }
 
-            // 2. Save Education
             if ($request->has('edu_kategori')) {
                 foreach ($request->edu_kategori as $index => $kat) {
                     \App\Models\Pelamarpendidikan::create([
@@ -201,7 +223,6 @@ class PelamarRegisterController extends Controller
                 }
             }
 
-            // 3. Save Skills
             if ($request->has('skill_nama')) {
                 foreach ($request->skill_nama as $index => $nama) {
                     \App\Models\Pelamarskill::create([
@@ -213,30 +234,31 @@ class PelamarRegisterController extends Controller
                 }
             }
 
-            // 4. Save Experience
             if (!$request->has('no_experience') && $request->has('exp_nama')) {
                 foreach ($request->exp_nama as $index => $nama) {
-                    if (empty($nama)) continue;
-                    $aktif = (int)($request->exp_aktif[$index] ?? 0);
+                    if (empty($nama)) {
+                        continue;
+                    }
+
+                    $aktif = (int) ($request->exp_aktif[$index] ?? 0);
 
                     \App\Models\Pelamarpengalaman::create([
                         'idpelamar' => $pelamar->id,
                         'namaperusahaan' => $nama,
                         'posisi' => $request->exp_posisi[$index],
                         'tahunawal' => $request->exp_awal[$index],
-                        'bulanawal'      => $request->exp_bulan_awal[$index] ?? 0,
+                        'bulanawal' => $request->exp_bulan_awal[$index] ?? 0,
                         'tahunselesai' => $request->exp_akhir[$index] ?? null,
-                        'bulanselesai' => (int)($request->exp_bulan_akhir[$index] ?? 0),
-                        'aktif'        => $aktif,
+                        'bulanselesai' => (int) ($request->exp_bulan_akhir[$index] ?? 0),
+                        'aktif' => $aktif,
                         'useradd' => auth()->id(),
                     ]);
                 }
             }
 
-            // 4. Save Mandatory Documents
             $mandatoryDocs = [
                 'doc_file_ktp' => 'KTP',
-                'doc_file_kuning' => 'Kartu Kuning (AK-1)'
+                'doc_file_kuning' => 'Kartu Kuning (AK-1)',
             ];
 
             foreach ($mandatoryDocs as $inputName => $docName) {
@@ -251,7 +273,6 @@ class PelamarRegisterController extends Controller
                 }
             }
 
-            // 5. Save Additional Documents
             if ($request->has('doc_name') && $request->hasFile('doc_file')) {
                 foreach ($request->doc_name as $index => $name) {
                     if (isset($request->file('doc_file')[$index])) {
@@ -270,20 +291,22 @@ class PelamarRegisterController extends Controller
 
             DB::commit();
 
-            // Tidak menghambat respons pengguna; job memuat ulang relasi setelah commit.
             PersistPelamarEmbeddings::dispatch($pelamar->id)->afterCommit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Profil berhasil divalidasi dan dilengkapi! Akses pencarian kerja telah aktif.',
-                'redirect' => route('pelamar.dashboard')
+                'message' => $isUpdate
+                    ? 'Profil berhasil diperbarui! Data terbaru sudah tersimpan.'
+                    : 'Profil berhasil divalidasi dan dilengkapi! Akses pencarian kerja telah aktif.',
+                'redirect' => route('pelamar.dashboard'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             \Illuminate\Support\Facades\Log::error('Applicant Portfolio Fulfillment Error: ' . $e->getMessage());
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan saat memproses portofolio Anda: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan saat memproses portofolio Anda: ' . $e->getMessage(),
             ], 500);
         }
     }

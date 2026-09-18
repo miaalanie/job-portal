@@ -228,6 +228,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/rekomendasi/pengaturan', [RecommendationController::class, 'settings'])->name('admin.recommendation.settings');
     Route::put('/rekomendasi/pengaturan', [RecommendationController::class, 'updateSettings'])->name('admin.recommendation.settings.update');
     Route::get('/rekomendasi/health', [RecommendationController::class, 'health'])->name('admin.recommendation.health');
+    Route::post('/rekomendasi/health/url', [RecommendationController::class, 'updateHealthUrl'])->name('admin.recommendation.health.update');
+    Route::get('/rekomendasi/health/check', [RecommendationController::class, 'healthCheck'])->name('admin.recommendation.health.check');
     Route::get('/rekomendasi/evaluasi', [RecommendationController::class, 'evaluation'])->name('admin.recommendation.evaluation');
     Route::post('/rekomendasi/evaluasi/run', [RecommendationController::class, 'runEvaluation'])->name('admin.recommendation.evaluation.run');
 

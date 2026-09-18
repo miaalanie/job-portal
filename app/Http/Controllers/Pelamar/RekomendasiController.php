@@ -91,7 +91,7 @@ class RekomendasiController extends Controller
         }
 
         try {
-            $lowongans = $this->itemBasedService->recommend($user->idpelamar, 6);
+            $lowongans = $this->itemBasedService->recommend($user->idpelamar, 12);
 
             if ($lowongans->isEmpty()) {
                 return response()->json([

@@ -16,8 +16,8 @@ return [
 
     // config/services.php
     'ml' => [
-        'url'     => env('ML_SERVICE_URL'),
-        'timeout' => env('ML_SERVICE_TIMEOUT'),
+        'url'     => env('ML_SERVICE_URL', 'http://localhost'),
+        'timeout' => env('ML_SERVICE_TIMEOUT', 60),
     ],
 
     'postmark' => [

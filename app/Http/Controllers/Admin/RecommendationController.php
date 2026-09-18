@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\ItemBasedRecommendationService;
 use App\Services\MLMatchingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -40,7 +41,6 @@ class RecommendationController extends Controller
             'weight_skill' => ['required', 'numeric', 'min:0', 'max:1'],
             'weight_education' => ['required', 'numeric', 'min:0', 'max:1'],
             'weight_experience' => ['required', 'numeric', 'min:0', 'max:1'],
-            'skill_threshold' => ['required', 'numeric', 'min:0', 'max:1'],
         ]);
 
         $weightTotal = collect($data)->only([
@@ -64,9 +64,39 @@ class RecommendationController extends Controller
     public function health()
     {
         $this->ensureSuperadmin();
-        $health = $this->mlService->healthDetails();
 
-        return view('admin.recommendation.health', compact('health'));
+        return view('admin.recommendation.health', [
+            'health' => $this->buildHealthPayload(),
+        ]);
+    }
+
+    public function healthCheck()
+    {
+        $this->ensureSuperadmin();
+
+        return response()->json($this->buildHealthPayload());
+    }
+
+    public function updateHealthUrl(Request $request)
+    {
+        $this->ensureSuperadmin();
+
+        $validated = $request->validate([
+            'ml_port' => ['required', 'integer', 'min:1', 'max:65535'],
+        ]);
+
+        $currentUrl = config('services.ml.url') ?: env('ML_SERVICE_URL') ?: 'http://localhost:8001';
+        $parsed = parse_url($currentUrl) ?: [];
+        $scheme = $parsed['scheme'] ?? 'http';
+        $host = $parsed['host'] ?? 'localhost';
+        $url = sprintf('%s://%s:%d', $scheme, $host, $validated['ml_port']);
+
+        $this->persistMlServiceUrl($url);
+        config(['services.ml.url' => $url]);
+        putenv('ML_SERVICE_URL=' . $url);
+        Artisan::call('config:clear');
+
+        return redirect()->route('admin.recommendation.health')->with('success', 'URL ML Service berhasil diubah menjadi ' . $url . '.');
     }
 
     public function evaluation()
@@ -262,6 +292,76 @@ class RecommendationController extends Controller
                 ? round($predictedCoverage->unique()->count() / $candidateCount * 100, 2)
                 : null,
         ];
+    }
+
+    private function buildHealthPayload(): array
+    {
+        $health = $this->mlService->healthDetails();
+        $meta = $this->mlServiceMeta();
+
+        return array_merge($health, [
+            'checked_at' => now()->toIso8601String(),
+            'meta' => $meta,
+        ]);
+    }
+
+    private function mlServiceMeta(): array
+    {
+        $mlUrl = config('services.ml.url') ?: env('ML_SERVICE_URL') ?: 'http://localhost';
+        $module = config('services.ml.module', env('ML_SERVICE_MODULE', 'app.main:app'));
+        $parsed = parse_url($mlUrl) ?: [];
+
+        $scheme = $parsed['scheme'] ?? 'http';
+        $host = $parsed['host'] ?? null;
+        $port = $parsed['port'] ?? null;
+
+        $portDetected = $port !== null;
+        $portMessage = null;
+        if (!$portDetected && $host !== null) {
+            $portMessage = 'Port tidak terdeteksi, cek ML_SERVICE_URL di .env.';
+        }
+
+        $uvicornCommand = $portDetected
+            ? sprintf('uvicorn %s --reload --port %s', $module, $port)
+            : sprintf('uvicorn %s --reload', $module);
+
+        return [
+            'ml_service_url' => $mlUrl,
+            'host' => $host,
+            'port' => $port,
+            'module' => $module,
+            'uvicorn_command' => $uvicornCommand,
+            'port_detected' => $portDetected,
+            'port_message' => $portMessage,
+        ];
+    }
+
+    private function persistMlServiceUrl(string $url): void
+    {
+        $envPath = base_path('.env');
+        if (!file_exists($envPath)) {
+            return;
+        }
+
+        $lines = file($envPath, FILE_IGNORE_NEW_LINES);
+        $updated = false;
+
+        foreach ($lines as $index => $line) {
+            if (preg_match('/^ML_SERVICE_URL\s*=/', $line)) {
+                $lines[$index] = 'ML_SERVICE_URL=' . $url;
+                $updated = true;
+                break;
+            }
+        }
+
+        if (! $updated) {
+            $lines[] = 'ML_SERVICE_URL=' . $url;
+        }
+
+        file_put_contents($envPath, implode(PHP_EOL, $lines) . PHP_EOL);
+        if (function_exists('opcache_invalidate')) {
+            opcache_invalidate($envPath, true);
+        }
     }
 
     private function ensureSuperadmin(): void

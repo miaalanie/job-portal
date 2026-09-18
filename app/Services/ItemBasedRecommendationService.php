@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\Log;
 
 class ItemBasedRecommendationService
 {
-    public function recommend(int $idPelamar, int $limit = 6): Collection
+    public function recommend(int $idPelamar, int $limit = 12): Collection
     {
         $log = Log::channel('rekomendasi_cf');
+        $log->info(" ");
         $log->info("========== REKOMENDASI CF | Pelamar #{$idPelamar} ==========");
 
         $userItems = $this->getUserItems($idPelamar);
@@ -31,32 +32,86 @@ class ItemBasedRecommendationService
 
     private function recommendFromItems(int $idPelamar, Collection $userItems, int $limit, $log): Collection
     {
-        $log->info("Item milik pelamar: [" . $userItems->implode(', ') . "]");
+        $namaLowongan = $this->getNamaLowonganMap();
+
+        // ===================== STEP 1 =====================
+        $log->info(" ");
+        $log->info("===================== STEP 1: Histori Pelamar Target =====================");
+        $log->info("Pelamar #{$idPelamar} pernah melamar/wishlist " . $userItems->count() . " lowongan:");
+        foreach ($userItems as $id) {
+            $log->info("  - #{$id} (" . ($namaLowongan[$id] ?? 'tidak diketahui') . ")");
+        }
 
         if ($userItems->isEmpty()) {
             $log->warning("Pelamar #{$idPelamar} tidak punya histori interaksi. Skip (cold-start).");
             return collect();
         }
 
+        // ===================== STEP 2 =====================
         $allInteractions = $this->getAllInteractions();
+        $log->info(" ");
+        $log->info("===================== STEP 2: Histori Seluruh Pelamar =====================");
+        $log->info("Total pelamar lain dalam sistem: " . $allInteractions->count());
+        $log->info("Contoh 20 pelamar pertama (sample, bukan semua):");
+        foreach ($allInteractions->take(20) as $idLain => $jobs) {
+            $namaJobs = array_map(fn($id) => ($namaLowongan[$id] ?? "ID#$id") . " (#$id)", $jobs);
+            $log->info("  - Pelamar #{$idLain}: [" . implode(', ', $namaJobs) . "]");
+        }
 
-        [$scores, $contributors] = $this->computeCoOccurrence($userItems->toArray(), $allInteractions, $idPelamar, $log);
+        // ===================== STEP 3 =====================
+        [$scores, $contributors, $jumlahIrisan, $sampelIrisan] =
+            $this->computeCoOccurrence($userItems->toArray(), $allInteractions, $idPelamar, $namaLowongan);
+
+        $log->info(" ");
+        $log->info("===================== STEP 3: Deteksi Kemiripan (Co-occurrence) =====================");
+        $log->info("Logika: pelamar lain dianggap 'mirip' kalau minimal 1 lowongan di histori mereka sama dengan histori Pelamar #{$idPelamar}.");
+        $log->info("Total pelamar yang terdeteksi mirip: {$jumlahIrisan} dari {$allInteractions->count()} total pelamar lain.");
+        $log->info("Contoh " . count($sampelIrisan) . " dari {$jumlahIrisan} pelamar mirip tersebut:");
+        foreach ($sampelIrisan as $line) {
+            $log->info("  - {$line}");
+        }
 
         if (empty($scores)) {
             $log->warning("Tidak ada kandidat lowongan ditemukan buat pelamar #{$idPelamar}.");
             return collect();
         }
 
+        // ===================== STEP 4 =====================
+        $log->info(" ");
+        $log->info("===================== STEP 4: Voting / Scoring Kandidat =====================");
+        $log->info("Logika: setiap 1 pelamar mirip menyumbang +1 skor ke tiap lowongan LAIN yang pernah mereka lamar (di luar histori Pelamar #{$idPelamar}).");
+        $log->info("Total kandidat lowongan yang terkumpul skornya: " . count($scores));
+        $log->info(" ");
+        $log->info("Contoh perhitungan lengkap untuk 1 kandidat (biar keliatan cara skornya kebentuk):");
+
+        $contohId = array_key_first($scores);
+        $contohNama = $namaLowongan[$contohId] ?? "ID#$contohId";
+        $totalVote = $scores[$contohId];
+        $log->info("  Kandidat: {$contohNama} — total skor akhir: {$totalVote}");
+        $log->info("  Rincian {$totalVote} vote didapat dari:");
+        foreach ($contributors[$contohId] as $v) {
+            $log->info("    + 1 dari {$v}");
+        }
+
+        $log->info(" ");
+        $log->info("Sample skor kandidat lain (belum diurutkan):");
+        foreach (array_slice($scores, 1, 20, true) as $id => $skor) {
+            $log->info("  - " . ($namaLowongan[$id] ?? "ID#$id") . ": {$skor} vote");
+        }
+
+        // ===================== STEP 5 =====================
         arsort($scores);
         $topScores = array_slice($scores, 0, $limit, true);
         $topIds    = array_keys($topScores);
 
-        $log->info("Hasil akhir (top {$limit}):");
+        $log->info(" ");
+        $log->info("===================== STEP 5: Ranking & Top-{$limit} =====================");
+        $log->info("Semua kandidat diurutkan dari skor tertinggi ke terendah, diambil {$limit} teratas.");
         foreach ($topScores as $idLowongan => $skor) {
-            $kontribusi = implode(' | ', array_slice($contributors[$idLowongan] ?? [], 0, 3));
-            $log->info("  - Lowongan #{$idLowongan} | skor={$skor} | via: {$kontribusi}");
+            $nama = $namaLowongan[$idLowongan] ?? "ID#$idLowongan";
+            $semua = implode('; ', $contributors[$idLowongan] ?? []);
+            $log->info("  → {$nama} (skor: {$skor}) — via: {$semua}");
         }
-
         return $this->fetchActiveLowongan($topIds, $topScores);
     }
 
@@ -93,15 +148,23 @@ class ItemBasedRecommendationService
         });
     }
 
+    private function getNamaLowonganMap(): array
+    {
+        return Cache::remember('nama_lowongan_map', now()->addMinutes(30), function () {
+            return Lowongan::pluck('namalowongan', 'id')->toArray();
+        });
+    }
+
     /**
-     * @return array [scores, contributors]
+     * @return array [scores, contributors, jumlahIrisan, sampelIrisan]
      */
-    private function computeCoOccurrence(array $userItems, Collection $allInteractions, int $idPelamar, $log): array
+    private function computeCoOccurrence(array $userItems, Collection $allInteractions, int $idPelamar, array $namaLowongan): array
     {
         $userSet      = array_flip($userItems);
         $scores       = [];
         $contributors = [];
         $jumlahIrisan = 0;
+        $sampelIrisan = [];
 
         foreach ($allInteractions as $idPelamarLain => $jobs) {
             if ($idPelamarLain == $idPelamar) {
@@ -110,13 +173,14 @@ class ItemBasedRecommendationService
 
             $shared = array_intersect($jobs, $userItems);
             if (empty($shared)) {
-                continue; // <-- ini yang bikin 40rb baris kalau di-print semua, jadi kita skip & gak dicatat
+                continue;
             }
 
             $jumlahIrisan++;
-            // catat cuma ringkasan, bukan detail tiap orang (biar log gak membengkak)
-            if ($jumlahIrisan <= 20) { // batasi cuma 20 contoh pertama biar log tetap ringkas
-                $log->debug("  Pelamar #{$idPelamarLain} punya irisan: [" . implode(',', $shared) . "] dari histori [" . implode(',', $jobs) . "]");
+
+            if (count($sampelIrisan) < 40) {
+                $namaShared = array_map(fn($id) => $namaLowongan[$id] ?? "ID#$id", $shared);
+                $sampelIrisan[] = "Pelamar #{$idPelamarLain} punya kesamaan: [" . implode(', ', $namaShared) . "]";
             }
 
             foreach ($shared as $seedJob) {
@@ -125,17 +189,12 @@ class ItemBasedRecommendationService
                         continue;
                     }
                     $scores[$candidateJob] = ($scores[$candidateJob] ?? 0) + 1;
-                    $contributors[$candidateJob][] = "Pelamar#{$idPelamarLain}(via lowongan {$seedJob})";
+                    $contributors[$candidateJob][] = "Pelamar#{$idPelamarLain} (via " . ($namaLowongan[$seedJob] ?? "ID#$seedJob") . ")";
                 }
             }
         }
 
-        $log->info("Total pelamar lain yang punya irisan histori: {$jumlahIrisan}");
-        if ($jumlahIrisan > 20) {
-            $log->info("(Cuma 20 contoh pertama yang dicatat detailnya, biar log tidak membengkak)");
-        }
-
-        return [$scores, $contributors];
+        return [$scores, $contributors, $jumlahIrisan, $sampelIrisan];
     }
 
     private function fetchActiveLowongan(array $orderedIds, array $scoreMap = []): Collection

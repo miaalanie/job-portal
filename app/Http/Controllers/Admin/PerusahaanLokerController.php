@@ -183,7 +183,7 @@ class PerusahaanLokerController extends Controller
                 }
             }
 
-            DB::afterCommit(fn () => PersistLowonganEmbeddings::dispatch($loker->id));
+            DB::afterCommit(fn() => PersistLowonganEmbeddings::dispatch($loker->id));
             DB::commit();
 
             return redirect()->route('admin.perusahaan.event.my-detail', $id)->with('success', 'Lowongan berhasil dipublikasikan.');
@@ -242,7 +242,7 @@ class PerusahaanLokerController extends Controller
                     $newLoker->jurusans()->create(['idjurusan' => $jurusan->idjurusan]);
                 }
 
-                DB::afterCommit(fn () => PersistLowonganEmbeddings::dispatch($newLoker->id));
+                DB::afterCommit(fn() => PersistLowonganEmbeddings::dispatch($newLoker->id));
                 $count++;
             }
 
@@ -415,7 +415,7 @@ class PerusahaanLokerController extends Controller
                 );
             }
 
-            DB::afterCommit(fn () => PersistLowonganEmbeddings::dispatch($loker->id));
+            DB::afterCommit(fn() => PersistLowonganEmbeddings::dispatch($loker->id));
             DB::commit();
 
             return redirect()->route('admin.perusahaan.event.my-detail', encrypt($loker->idregister))->with('success', 'Lowongan berhasil diperbarui.');
@@ -428,7 +428,7 @@ class PerusahaanLokerController extends Controller
         }
     }
 
-    public function showApplicants($id)
+    public function showApplicants($id, Request $request)
     {
         try {
             $decryptedId = Crypt::decrypt($id);
@@ -445,6 +445,11 @@ class PerusahaanLokerController extends Controller
 
             if ($loker->register->idperusahaan != Auth::user()->idperusahaan) {
                 abort(403);
+            }
+
+            // tambahan buat lihat data mentahnya sebagai JSON
+            if ($request->query('format') === 'json') {
+                return response()->json($loker);
             }
 
             return view('admin.perusahaan.loker_applicants', compact('loker'));

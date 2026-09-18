@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\DirectTalentMail;
+use Inertia\Response;
 
 class PerusahaanPelamarController extends Controller
 {
@@ -56,13 +57,17 @@ class PerusahaanPelamarController extends Controller
     /**
      * Show detailed applicant profile for Company Admin.
      */
-    public function show($id)
+    public function show($id, Request $request)
     {
         try {
             $decryptedId = Crypt::decrypt($id);
             $applicant = Pelamar::with([
                 'user', 'pendidikans', 'pengalamans', 'dokumens', 'skills', 'lamarans.lowongan.register.even'
             ])->findOrFail($decryptedId);
+
+            if ($request->query('format') === 'json'){
+                return response()->json($applicant);
+            }
 
             return view('admin.pencari_kerja.show', compact('applicant'));
         } catch (\Exception $e) {
