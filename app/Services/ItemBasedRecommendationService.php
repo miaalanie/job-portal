@@ -147,7 +147,7 @@ class ItemBasedRecommendationService
                 ->map(fn($rows) => $rows->pluck('idlowongan')->unique()->values()->toArray());
         });
     }
-
+    
     private function getNamaLowonganMap(): array
     {
         return Cache::remember('nama_lowongan_map', now()->addMinutes(30), function () {
