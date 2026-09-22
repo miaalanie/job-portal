@@ -2,6 +2,20 @@
 
 @section('title', 'Pelamar: ' . $loker->namalowongan)
 
+@php
+    $pendidikan = [
+        1 => 'SD',
+        2 => 'SMP',
+        3 => 'SMA / SMK',
+        4 => 'D1',
+        5 => 'D2',
+        6 => 'D3',
+        7 => 'D4 / S1',
+        8 => 'S2',
+        9 => 'S3',
+    ];
+@endphp
+
 @section('content')
 <div class="row g-7">
     <!-- Header Summary Card -->

@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -162,6 +163,8 @@ class PelamarRegisterController extends Controller
         try {
             DB::beginTransaction();
 
+            $pelamar = null;
+
             $pelamarData = [
                 'noktp' => $request->noktp,
                 'namalengkap' => $request->namalengkap,
@@ -177,6 +180,11 @@ class PelamarRegisterController extends Controller
             ];
 
             if ($request->hasFile('foto_profil')) {
+                $existingPhoto = $idPelamar ? Pelamar::find($idPelamar)?->foto : null;
+                if ($existingPhoto) {
+                    Storage::disk('public')->delete($existingPhoto);
+                }
+
                 $pelamarData['foto'] = $request->file('foto_profil')->store('pelamar/foto', 'public');
             }
 
@@ -262,8 +270,23 @@ class PelamarRegisterController extends Controller
             ];
 
             foreach ($mandatoryDocs as $inputName => $docName) {
-                if ($request->hasFile($inputName)) {
-                    $path = $request->file($inputName)->store('pelamar/docs', 'public');
+                if (!$request->hasFile($inputName)) {
+                    continue;
+                }
+
+                $existingDoc = $pelamar->dokumens()->where('namadokumen', $docName)->first();
+                if ($existingDoc && $existingDoc->filedokumen) {
+                    Storage::disk('public')->delete($existingDoc->filedokumen);
+                }
+
+                $path = $request->file($inputName)->store('pelamar/docs', 'public');
+
+                if ($existingDoc) {
+                    $existingDoc->update([
+                        'filedokumen' => $path,
+                        'userupdate' => auth()->id(),
+                    ]);
+                } else {
                     \App\Models\Pelamardokumen::create([
                         'idpelamar' => $pelamar->id,
                         'namadokumen' => $docName,
@@ -275,8 +298,23 @@ class PelamarRegisterController extends Controller
 
             if ($request->has('doc_name') && $request->hasFile('doc_file')) {
                 foreach ($request->doc_name as $index => $name) {
-                    if (isset($request->file('doc_file')[$index])) {
-                        $path = $request->file('doc_file')[$index]->store('pelamar/docs', 'public');
+                    if (empty($name) || !isset($request->file('doc_file')[$index])) {
+                        continue;
+                    }
+
+                    $existingDoc = $pelamar->dokumens()->where('namadokumen', $name)->first();
+                    if ($existingDoc && $existingDoc->filedokumen) {
+                        Storage::disk('public')->delete($existingDoc->filedokumen);
+                    }
+
+                    $path = $request->file('doc_file')[$index]->store('pelamar/docs', 'public');
+
+                    if ($existingDoc) {
+                        $existingDoc->update([
+                            'filedokumen' => $path,
+                            'userupdate' => auth()->id(),
+                        ]);
+                    } else {
                         \App\Models\Pelamardokumen::create([
                             'idpelamar' => $pelamar->id,
                             'namadokumen' => $name,
