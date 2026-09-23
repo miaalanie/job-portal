@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Lamaran;
 use App\Models\Lowongan;
+use App\Models\MlRequestLog;
 use App\Models\Pelamar;
 use App\Models\RecommendationSetting;
 use App\Models\User;
@@ -369,5 +370,82 @@ class RecommendationController extends Controller
         /** @var User|null $user */
         $user = Auth::user();
         abort_unless($user?->hasRole('Superadmin'), 403);
+    }
+
+    /**
+     * Display ML/CF request logs with filters and summary stats.
+     */
+    public function requestLogs(Request $request)
+    {
+        $this->ensureSuperadmin();
+
+        $query = MlRequestLog::query();
+
+        // Filters
+        if ($request->filled('request_type')) {
+            $query->where('request_type', $request->input('request_type'));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+        if ($request->filled('date_from')) {
+            $query->where('created_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->where('created_at', '<=', $request->input('date_to') . ' 23:59:59');
+        }
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('request_id', 'like', "%{$search}%")
+                  ->orWhere('endpoint', 'like', "%{$search}%")
+                  ->orWhere('error', 'like', "%{$search}%");
+            });
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        // Summary stats (respect filters)
+        $statsQuery = MlRequestLog::query();
+        if ($request->filled('request_type')) {
+            $statsQuery->where('request_type', $request->input('request_type'));
+        }
+        if ($request->filled('status')) {
+            $statsQuery->where('status', $request->input('status'));
+        }
+        if ($request->filled('date_from')) {
+            $statsQuery->where('created_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $statsQuery->where('created_at', '<=', $request->input('date_to') . ' 23:59:59');
+        }
+
+        $total = (clone $statsQuery)->count();
+        $errors = (clone $statsQuery)->where('status', 'error')->count();
+        $avgDuration = (clone $statsQuery)->where('status', 'success')->avg('duration_ms');
+
+        $byType = (clone $statsQuery)
+            ->selectRaw('request_type, COUNT(*) as total, AVG(duration_ms) as avg_ms, SUM(status = "error") as errors')
+            ->groupBy('request_type')
+            ->get()
+            ->keyBy('request_type');
+
+        $stats = [
+            'total' => $total,
+            'errors' => $errors,
+            'success_rate' => $total > 0 ? round(($total - $errors) / $total * 100, 1) : 0,
+            'avg_duration_ms' => round($avgDuration ?? 0, 2),
+            'by_type' => $byType,
+        ];
+
+        $requestTypes = [
+            'embedding_pelamar' => 'Embedding Pelamar',
+            'embedding_lowongan' => 'Embedding Lowongan',
+            'match' => 'CBF Match',
+            'rank_applicants' => 'Rank Pelamar',
+            'cf_recommendation' => 'CF Rekomendasi',
+        ];
+
+        return view('admin.recommendation.request_logs', compact('logs', 'stats', 'requestTypes'));
     }
 }

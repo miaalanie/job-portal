@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Embedding;
+use App\Models\MlRequestLog;
 use App\Models\RecommendationSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,10 @@ class  MLMatchingService
 
     public function match($pelamar, $lowongans): array
     {
+        $startedAt = microtime(true);
+        $requestType = 'match';
+        $requestId = (string) (new \Illuminate\Support\Str())->uuid();
+
         try {
             $this->loadPersistedEmbeddings($pelamar, $lowongans);
             $payload = [
@@ -31,6 +36,16 @@ class  MLMatchingService
                 ->post("{$this->baseUrl}/match", $payload);
 
             if ($response->failed()) {
+                $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/match", [
+                    'request_id' => $requestId,
+                    'pelamar_id' => $pelamar->id ?? null,
+                    'total_lowongans_sent' => count($lowongans ?? []),
+                    'status' => 'error',
+                    'status_code' => $response->status(),
+                    'duration_ms' => $this->elapsedMs($startedAt),
+                    'error' => $response->body(),
+                ]);
+
                 Log::error('ML Service error', [
                     'status' => $response->status(),
                     'body'   => $response->body(),
@@ -51,8 +66,26 @@ class  MLMatchingService
                 })->toArray();
             }
 
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/match", [
+                'request_id' => $requestId,
+                'pelamar_id' => $pelamar->id ?? null,
+                'total_lowongans_sent' => count($lowongans ?? []),
+                'total_recommendations' => count($result['recommendations'] ?? []),
+                'status' => 'success',
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'model_version' => $result['model_version'] ?? null,
+            ]);
+
             return $result;
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/match", [
+                'request_id' => $requestId,
+                'pelamar_id' => $pelamar->id ?? null,
+                'total_lowongans_sent' => count($lowongans ?? []),
+                'status' => 'error',
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'error' => $e->getMessage(),
+            ]);
             Log::error('ML Service connection failed', [
                 'error' => $e->getMessage(),
             ]);
@@ -62,6 +95,14 @@ class  MLMatchingService
                 'message' => 'Tidak dapat terhubung ke ML service.',
             ];
         } catch (\Exception $e) {
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/match", [
+                'request_id' => $requestId,
+                'pelamar_id' => $pelamar->id ?? null,
+                'total_lowongans_sent' => count($lowongans ?? []),
+                'status' => 'error',
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'error' => $e->getMessage(),
+            ]);
             Log::error('ML Service unexpected error', [
                 'error' => $e->getMessage(),
             ]);
@@ -79,6 +120,14 @@ class  MLMatchingService
      */
     public function persistPelamarEmbeddings($pelamar): void
     {
+        $startedAt = microtime(true);
+        $requestType = 'embedding_pelamar';
+        $requestId = (string) \Illuminate\Support\Str::uuid();
+
+        $isUpdate = $pelamar->wasRecentlyCreated === false;
+        $totalSkills = $pelamar->skills->count();
+        $totalPendidikans = $pelamar->pendidikans->count();
+        $totalPengalamans = $pelamar->pengalamans->count();
 
         $payload = [
             'pelamar' => $this->buildPelamarPayload($pelamar, true),
@@ -96,6 +145,18 @@ class  MLMatchingService
             ]);
 
         if ($response->failed()) {
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/embeddings/pelamar", [
+                'request_id' => $requestId,
+                'pelamar_id' => $pelamar->id,
+                'is_update' => $isUpdate,
+                'total_skills' => $totalSkills,
+                'total_pendidikans' => $totalPendidikans,
+                'total_pengalamans' => $totalPengalamans,
+                'status' => 'error',
+                'status_code' => $response->status(),
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'error' => $response->body(),
+            ]);
             Log::error('ML Service applicant embedding error', [
                 'pelamar_id' => $pelamar->id,
                 'status' => $response->status(),
@@ -147,6 +208,20 @@ class  MLMatchingService
             'pelamar_id' => $pelamar->id,
             'total_saved' => count($result['embeddings']),
         ]);
+
+        $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/embeddings/pelamar", [
+            'request_id' => $requestId,
+            'pelamar_id' => $pelamar->id,
+            'is_update' => $isUpdate,
+            'total_skills' => $totalSkills,
+            'total_pendidikans' => $totalPendidikans,
+            'total_pengalamans' => $totalPengalamans,
+            'total_records_embedded' => count($result['embeddings'] ?? []),
+            'status' => 'success',
+            'duration_ms' => $this->elapsedMs($startedAt),
+            'model_version' => $result['model_version'] ?? null,
+            'embedding_dimension' => $result['embedding_dimension'] ?? null,
+        ]);
     }
 
     /**
@@ -154,6 +229,13 @@ class  MLMatchingService
      */
     public function persistLowonganEmbeddings($lowongan): void
     {
+        $startedAt = microtime(true);
+        $requestType = 'embedding_lowongan';
+        $requestId = (string) \Illuminate\Support\Str::uuid();
+
+        $isUpdate = $lowongan->wasRecentlyCreated === false;
+        $totalSkills = $lowongan->skills->count();
+        $totalJurusans = $lowongan->jurusans->count();
 
         $payload = [
             'lowongan' => $this->buildLowonganPayload($lowongan, true),
@@ -171,6 +253,17 @@ class  MLMatchingService
             ]);
 
         if ($response->failed()) {
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/embeddings/lowongan", [
+                'request_id' => $requestId,
+                'lowongan_id' => $lowongan->id,
+                'is_update' => $isUpdate,
+                'total_skills' => $totalSkills,
+                'total_jurusans' => $totalJurusans,
+                'status' => 'error',
+                'status_code' => $response->status(),
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'error' => $response->body(),
+            ]);
             Log::error('ML Service vacancy embedding error', [
                 'lowongan_id' => $lowongan->id,
                 'status' => $response->status(),
@@ -220,6 +313,90 @@ class  MLMatchingService
             'lowongan_id' => $lowongan->id,
             'total_saved' => count($result['embeddings']),
         ]);
+
+        $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/embeddings/lowongan", [
+            'request_id' => $requestId,
+            'lowongan_id' => $lowongan->id,
+            'is_update' => $isUpdate,
+            'total_skills' => $totalSkills,
+            'total_jurusans' => $totalJurusans,
+            'total_records_embedded' => count($result['embeddings'] ?? []),
+            'status' => 'success',
+            'duration_ms' => $this->elapsedMs($startedAt),
+            'model_version' => $result['model_version'] ?? null,
+            'embedding_dimension' => $result['embedding_dimension'] ?? null,
+        ]);
+    }
+
+    private function logMlRequestMetrics(string $requestType, string $endpoint, array $context = []): void
+    {
+        $base = [
+            'request_type' => $requestType,
+            'endpoint' => $endpoint,
+            'request_id' => $context['request_id'] ?? null,
+            'status' => $context['status'] ?? 'success',
+            'status_code' => $context['status_code'] ?? null,
+            'duration_ms' => $context['duration_ms'] ?? null,
+            'error' => $context['error'] ?? null,
+        ];
+
+        // Type-specific fields
+        switch ($requestType) {
+            case 'embedding_pelamar':
+                $base['pelamar_id'] = $context['pelamar_id'] ?? null;
+                $base['is_update'] = $context['is_update'] ?? null;
+                $base['total_skills'] = $context['total_skills'] ?? null;
+                $base['total_pendidikans'] = $context['total_pendidikans'] ?? null;
+                $base['total_pengalamans'] = $context['total_pengalamans'] ?? null;
+                $base['total_records_embedded'] = $context['total_records_embedded'] ?? null;
+                $base['model_version'] = $context['model_version'] ?? null;
+                $base['embedding_dimension'] = $context['embedding_dimension'] ?? null;
+                break;
+
+            case 'embedding_lowongan':
+                $base['lowongan_id'] = $context['lowongan_id'] ?? null;
+                $base['is_update'] = $context['is_update'] ?? null;
+                $base['total_skills'] = $context['total_skills'] ?? null;
+                $base['total_jurusans'] = $context['total_jurusans'] ?? null;
+                $base['total_records_embedded'] = $context['total_records_embedded'] ?? null;
+                $base['model_version'] = $context['model_version'] ?? null;
+                $base['embedding_dimension'] = $context['embedding_dimension'] ?? null;
+                break;
+
+            case 'match':
+                $base['pelamar_id'] = $context['pelamar_id'] ?? null;
+                $base['total_lowongans_sent'] = $context['total_lowongans_sent'] ?? null;
+                $base['total_recommendations'] = $context['total_recommendations'] ?? null;
+                $base['model_version'] = $context['model_version'] ?? null;
+                break;
+
+            case 'rank_applicants':
+                $base['lowongan_id'] = $context['lowongan_id'] ?? null;
+                $base['total_pelamars_sent'] = $context['total_pelamars_sent'] ?? null;
+                $base['total_ranked'] = $context['total_ranked'] ?? null;
+                $base['model_version'] = $context['model_version'] ?? null;
+                break;
+        }
+
+        Log::info('ML request metric', $base);
+
+        // Persist to database for admin dashboard
+        try {
+            MlRequestLog::create(array_merge($base, [
+                'model_version' => $context['model_version'] ?? null,
+                'embedding_dimension' => $context['embedding_dimension'] ?? null,
+                'extra' => $context['extra'] ?? null,
+            ]));
+        } catch (\Throwable $e) {
+            Log::warning('Gagal menyimpan ML request log ke database', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function elapsedMs(float $startedAt): float
+    {
+        return round((microtime(true) - $startedAt) * 1000, 2);
     }
 
     private function loadPersistedEmbeddings($pelamar, $lowongans): void
@@ -441,8 +618,13 @@ class  MLMatchingService
     }
     public function rankApplicants($loker): array
     {
+        $startedAt = microtime(true);
+        $requestType = 'rank_applicants';
+        $requestId = (string) \Illuminate\Support\Str::uuid();
+
         try {
             $pelamars = $loker->lamarans->pluck('pelamar')->filter()->values();
+            $totalPelamarsSent = $pelamars->count();
             $this->loadPersistedEmbeddings($pelamars, collect([$loker]));
             $payload = $this->buildRankPayload($loker);
 
@@ -450,6 +632,15 @@ class  MLMatchingService
                 ->post("{$this->baseUrl}/rank-applicants", $payload);
 
             if ($response->failed()) {
+                $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/rank-applicants", [
+                    'request_id' => $requestId,
+                    'lowongan_id' => $loker->id,
+                    'total_pelamars_sent' => $totalPelamarsSent,
+                    'status' => 'error',
+                    'status_code' => $response->status(),
+                    'duration_ms' => $this->elapsedMs($startedAt),
+                    'error' => $response->body(),
+                ]);
                 Log::error('ML Service rank error', [
                     'status' => $response->status(),
                     'body'   => $response->body(),
@@ -460,11 +651,40 @@ class  MLMatchingService
                 ];
             }
 
-            return $response->json();
+            $result = $response->json();
+            $rankedCount = count($result['ranked_applicants'] ?? []);
+
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/rank-applicants", [
+                'request_id' => $requestId,
+                'lowongan_id' => $loker->id,
+                'total_pelamars_sent' => $totalPelamarsSent,
+                'total_ranked' => $rankedCount,
+                'status' => 'success',
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'model_version' => $result['model_version'] ?? null,
+            ]);
+
+            return $result;
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/rank-applicants", [
+                'request_id' => $requestId,
+                'lowongan_id' => $loker->id,
+                'total_pelamars_sent' => $pelamars->count() ?? 0,
+                'status' => 'error',
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'error' => $e->getMessage(),
+            ]);
             Log::error('ML Service rank connection failed', ['error' => $e->getMessage()]);
             return ['success' => false, 'message' => 'Tidak dapat terhubung ke ML service.'];
         } catch (\Exception $e) {
+            $this->logMlRequestMetrics($requestType, "{$this->baseUrl}/rank-applicants", [
+                'request_id' => $requestId,
+                'lowongan_id' => $loker->id,
+                'total_pelamars_sent' => $pelamars->count() ?? 0,
+                'status' => 'error',
+                'duration_ms' => $this->elapsedMs($startedAt),
+                'error' => $e->getMessage(),
+            ]);
             Log::error('ML Service rank unexpected error', ['error' => $e->getMessage()]);
             return ['success' => false, 'message' => 'Terjadi kesalahan internal.'];
         }

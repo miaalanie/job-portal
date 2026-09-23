@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Lowongan;
+use App\Models\MlRequestLog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -12,12 +13,45 @@ class ItemBasedRecommendationService
 {
     public function recommend(int $idPelamar, int $limit = 12): Collection
     {
+        $startedAt = microtime(true);
         $log = Log::channel('rekomendasi_cf');
         $log->info(" ");
         $log->info("========== REKOMENDASI CF | Pelamar #{$idPelamar} ==========");
 
         $userItems = $this->getUserItems($idPelamar);
-        return $this->recommendFromItems($idPelamar, $userItems, $limit, $log);
+        $result = $this->recommendFromItems($idPelamar, $userItems, $limit, $log);
+
+        // Performance metrics for CF
+        $durationMs = round((microtime(true) - $startedAt) * 1000, 2);
+
+        Log::channel('rekomendasi_cf')->info('CF request metric', [
+            'request_type' => 'cf_recommendation',
+            'pelamar_id' => $idPelamar,
+            'user_items_count' => $userItems->count(),
+            'result_count' => $result->count(),
+            'duration_ms' => $durationMs,
+            'status' => 'success',
+        ]);
+
+        // Persist to database for admin dashboard
+        try {
+            MlRequestLog::create([
+                'request_id' => (string) \Illuminate\Support\Str::uuid(),
+                'request_type' => 'cf_recommendation',
+                'endpoint' => 'cf_recommendation',
+                'status' => 'success',
+                'duration_ms' => $durationMs,
+                'pelamar_id' => $idPelamar,
+                'user_items_count' => $userItems->count(),
+                'result_count' => $result->count(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Gagal menyimpan CF request log ke database', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $result;
     }
 
     /**
@@ -112,6 +146,13 @@ class ItemBasedRecommendationService
             $semua = implode('; ', $contributors[$idLowongan] ?? []);
             $log->info("  → {$nama} (skor: {$skor}) — via: {$semua}");
         }
+
+        // Log CF co-occurrence metrics
+        $log->info('CF co-occurrence detail', [
+            'similar_users_count' => $jumlahIrisan,
+            'candidate_count' => count($scores),
+        ]);
+
         return $this->fetchActiveLowongan($topIds, $topScores);
     }
 

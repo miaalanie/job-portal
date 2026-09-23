@@ -232,6 +232,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/rekomendasi/health/check', [RecommendationController::class, 'healthCheck'])->name('admin.recommendation.health.check');
     Route::get('/rekomendasi/evaluasi', [RecommendationController::class, 'evaluation'])->name('admin.recommendation.evaluation');
     Route::post('/rekomendasi/evaluasi/run', [RecommendationController::class, 'runEvaluation'])->name('admin.recommendation.evaluation.run');
+    Route::get('/rekomendasi/request-logs', [RecommendationController::class, 'requestLogs'])->name('admin.recommendation.request-logs');
 
     Route::get('/event', [EvenController::class, 'index'])->name('admin.event');
     Route::post('event/{id}/approve', [EvenController::class, 'approve'])->name('admin.event.approve');
